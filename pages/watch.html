@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Watch – CineVerse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    body { cursor: auto; background: #050509; }
+    .watch-nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: rgba(5,5,9,0.9); backdrop-filter: blur(10px);
+      padding: 14px 24px; z-index: 50;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--clr-border-2);
+    }
+    .watch-wrap {
+      max-width: 1200px; margin: 0 auto;
+      padding: 100px 24px 60px;
+    }
+    .player-box {
+      position: relative;
+      width: 100%; aspect-ratio: 16/9;
+      background: #000; border-radius: 18px;
+      overflow: hidden; margin-bottom: 24px;
+      box-shadow: 0 20px 60px rgba(139,47,201,0.25);
+    }
+    .player-box video, .player-box iframe {
+      width: 100%; height: 100%; border: none; display: block;
+    }
+    /* Invisible click-blocker over Google Drive's "Pop-out" button.
+       Cross-origin iframe means we can't remove the button from the DOM,
+       but we can intercept the click so users aren't redirected to
+       drive.google.com. Transparent so nothing shows on top of the video. */
+    .iframe-shield {
+      position: absolute;
+      top: 0; right: 0;
+      width: 68px; height: 68px;
+      z-index: 10;
+      background: transparent;
+      cursor: default;
+      pointer-events: auto;
+    }
+
+    /* Resume banner */
+    .resume-banner {
+      position: absolute; left: 20px; bottom: 20px; z-index: 5;
+      background: rgba(7,7,16,0.92);
+      border: 1px solid var(--clr-border-2);
+      border-radius: 14px; padding: 12px 16px;
+      display: flex; align-items: center; gap: 14px;
+      backdrop-filter: blur(10px);
+      animation: slideUp 0.4s ease;
+      max-width: calc(100% - 40px);
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .resume-banner .rb-text { font-size: 0.88rem; color: var(--clr-text); }
+    .resume-banner .rb-sub  { font-size: 0.78rem; color: var(--clr-text-muted); margin-top: 2px; }
+    .resume-banner button {
+      padding: 8px 16px; border-radius: 99px;
+      font-weight: 700; font-size: 0.85rem; cursor: pointer;
+      font-family: inherit; border: 1px solid var(--clr-border-2);
+      background: var(--clr-card); color: var(--clr-text);
+    }
+    .resume-banner .rb-resume {
+      background: var(--clr-primary); border-color: var(--clr-primary); color: #fff;
+    }
+    .resume-banner .rb-resume:hover { filter: brightness(1.15); }
+    .resume-banner .rb-dismiss:hover { border-color: var(--clr-primary); }
+
+    /* Progress dot on loaded metadata overlay */
+    .progress-preview {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      height: 3px; background: rgba(255,255,255,0.1);
+      pointer-events: none; z-index: 3;
+    }
+    .progress-preview .pp-fill {
+      height: 100%; background: var(--clr-primary-2);
+      width: 0%; transition: width 0.3s;
+    }
+
+    /* Auto-thumbnail overlay shown when the video is paused */
+    .pause-poster {
+      position: absolute; inset: 0; z-index: 4;
+      background-size: cover; background-position: center;
+      background-color: #0a0a12;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      animation: fadeIn 0.2s ease;
+    }
+    .pause-poster::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 100%);
+    }
+    .pause-poster .pp-play {
+      position: relative; z-index: 1;
+      width: 92px; height: 92px; border-radius: 50%;
+      background: rgba(7,7,16,0.65);
+      border: 2px solid rgba(255,255,255,0.85);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 2.4rem;
+      backdrop-filter: blur(10px);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .pause-poster:hover .pp-play {
+      transform: scale(1.08);
+      background: rgba(139,47,201,0.7);
+    }
+    .pause-poster .pp-fallback {
+      position: relative; z-index: 1;
+      font-size: 4rem; font-weight: 900; color: rgba(255,255,255,0.92);
+      letter-spacing: 3px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+
+    /* Rainbow audio visualizer — flanks the player on both sides */
+    .player-shell {
+      display: flex; align-items: stretch; gap: 12px;
+      margin-bottom: 24px;
+    }
+    .player-shell .player-box {
+      flex: 1 1 auto; margin-bottom: 0;
+    }
+    .viz-side {
+      flex: 0 0 72px; width: 72px;
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(7,7,16,0.9), rgba(7,7,16,0.55));
+      border: 1px solid var(--clr-border-2);
+      box-shadow: 0 10px 30px rgba(139,47,201,0.15);
+      align-self: stretch;
+    }
+    .viz-side canvas { display: block; width: 100%; height: 100%; }
+    .viz-side .viz-label {
+      position: absolute; bottom: 8px; left: 50%;
+      transform: translateX(-50%) rotate(-90deg) translateY(-50%);
+      transform-origin: left bottom;
+      z-index: 2; white-space: nowrap;
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: rgba(255,255,255,0.45);
+      pointer-events: none;
+    }
+    @media (max-width: 820px) {
+      .player-shell { gap: 6px; }
+      .viz-side { flex-basis: 44px; width: 44px; }
+      .viz-side .viz-label { display: none; }
+    }
+    @media (max-width: 560px) {
+      .viz-side { display: none; }
+    }
+
+    /* Meta */
+    .meta-head {
+      display: flex; align-items: flex-start; gap: 16px;
+      flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .meta-head h1 { font-size: 2rem; font-weight: 800; flex: 1; min-width: 200px; }
+    .meta-row {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+      color: var(--clr-text-muted); font-size: 0.9rem;
+      margin-bottom: 18px;
+    }
+    .meta-row .tag {
+      background: rgba(139,47,201,0.15);
+      border: 1px solid rgba(139,47,201,0.4);
+      padding: 4px 12px; border-radius: 99px;
+      color: #c44dff; font-weight: 600; font-size: 0.78rem;
+    }
+    .meta-row .badge-tag {
+      background: rgba(245,197,24,0.15);
+      border: 1px solid rgba(245,197,24,0.4);
+      color: #f5c518;
+    }
+    .meta-rating { color: var(--clr-accent); font-weight: 700; }
+    .meta-rating.muted { color: var(--clr-text-muted); font-weight: 600; }
+    .promoted-tag {
+      background: linear-gradient(135deg, rgba(245,197,24,0.18), rgba(255,159,28,0.14)) !important;
+      border-color: rgba(245,197,24,0.5) !important;
+      color: #f5c518 !important;
+    }
+
+    /* User rating + comments block */
+    .engage-card {
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border-2);
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 24px;
+    }
+    .engage-card h3 {
+      font-size: 0.8rem; text-transform: uppercase;
+      letter-spacing: 2px; color: var(--clr-text-muted);
+      margin-bottom: 14px; font-weight: 700;
+    }
+    .rate-row {
+      display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    }
+    .star-pick { display: inline-flex; gap: 2px; }
+    .star-pick button {
+      background: none; border: none; padding: 2px 4px;
+      font-size: 2rem; line-height: 1; cursor: pointer;
+      color: rgba(255,255,255,0.22);
+      transition: transform 0.12s, color 0.12s;
+      font-family: inherit;
+    }
+    .star-pick button:hover { transform: scale(1.15); }
+    .star-pick button.on { color: #f5c518; text-shadow: 0 0 10px rgba(245,197,24,0.5); }
+    .star-pick button.hover { color: #ffd750; }
+    .rate-summary {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .rate-big {
+      font-size: 1.6rem; font-weight: 900; color: var(--clr-text);
+    }
+    .rate-big .star-icon { color: #f5c518; }
+    .rate-sub { font-size: 0.82rem; color: var(--clr-text-muted); }
+
+    .comment-form { margin-top: 8px; }
+    .comment-form textarea {
+      width: 100%; padding: 12px 14px; border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--clr-border-2);
+      color: var(--clr-text); font-family: inherit; font-size: 0.92rem;
+      resize: vertical; min-height: 70px;
+    }
+    .comment-form textarea:focus {
+      outline: none; border-color: var(--clr-primary-2);
+    }
+    .comment-form .cf-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 10px; flex-wrap: wrap; gap: 10px;
+    }
+    .comment-form .cf-hint { font-size: 0.78rem; color: var(--clr-text-muted); }
+    .comment-form button {
+      padding: 9px 22px; border-radius: 99px;
+      font-weight: 700; font-size: 0.88rem; cursor: pointer;
+      background: var(--clr-primary); color: #fff;
+      border: none; font-family: inherit;
+    }
+    .comment-form button:hover { filter: brightness(1.1); }
+    .comment-form button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Star-based quick-reaction chips */
+    .qr-wrap {
+      margin: 2px 0 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(139,47,201,0.06), rgba(196,77,255,0.04));
+      border: 1px solid var(--clr-border-2);
+    }
+    .qr-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .qr-title {
+      font-size: 0.78rem; font-weight: 700; color: var(--clr-text);
+      letter-spacing: 0.5px;
+    }
+    .qr-title .qr-stars { color: #f5c518; letter-spacing: 1px; margin-right: 4px; }
+    .qr-sub { font-size: 0.76rem; color: var(--clr-text-muted); }
+    .qr-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .qr-chip {
+      padding: 7px 14px; border-radius: 99px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--clr-border-2);
+      color: var(--clr-text); font-family: inherit;
+      font-size: 0.84rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .qr-chip:hover {
+      background: rgba(139,47,201,0.18);
+      border-color: var(--clr-primary-2);
+      transform: translateY(-1px);
+    }
+    .qr-locked {
+      padding: 14px 16px;
+      font-size: 0.84rem; color: var(--clr-text-muted);
+      text-align: center; border-radius: 12px;
+      border: 1px dashed var(--clr-border-2);
+      background: rgba(255,255,255,0.02);
+      margin-bottom: 16px;
+    }
+    .qr-locked b { color: #f5c518; }
+
+    .comments-list { margin-top: 18px; display: flex; flex-direction: column; gap: 14px; }
+    .comment-item {
+      padding: 14px 16px; border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--clr-border-2);
+    }
+    .comment-item .ci-head {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.82rem; margin-bottom: 8px;
+    }
+    .comment-item .ci-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--grad-primary);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: 0.78rem;
+    }
+    .comment-item .ci-user { font-weight: 700; color: var(--clr-text); }
+    .comment-item .ci-time { color: var(--clr-text-muted); font-size: 0.75rem; margin-left: auto; }
+    .comment-item .ci-del {
+      background: none; border: none; color: #ff6b9d; cursor: pointer;
+      font-size: 0.75rem; margin-left: 6px;
+    }
+    .comment-item .ci-del:hover { text-decoration: underline; }
+    .comment-item .ci-text {
+      color: var(--clr-text); line-height: 1.5; font-size: 0.92rem;
+      word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap;
+    }
+    .comments-empty {
+      text-align: center; padding: 30px 20px;
+      color: var(--clr-text-muted); font-size: 0.88rem;
+    }
+    .signin-nudge {
+      padding: 14px 16px; border-radius: 12px;
+      border: 1px dashed var(--clr-border-2);
+      background: rgba(255,255,255,0.02);
+      color: var(--clr-text-muted); font-size: 0.9rem;
+      text-align: center;
+    }
+    .signin-nudge a {
+      color: var(--clr-primary-2); font-weight: 700; text-decoration: none;
+    }
+    .signin-nudge a:hover { text-decoration: underline; }
+
+    /* Action row */
+    .action-row {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px;
+    }
+    .action-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px; border-radius: 99px;
+      font-size: 0.88rem; font-weight: 600;
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border-2);
+      color: var(--clr-text);
+      cursor: pointer; font-family: inherit;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+    .action-btn:hover {
+      border-color: var(--clr-primary);
+      transform: translateY(-1px);
+    }
+    .action-btn.active {
+      background: rgba(139,47,201,0.2);
+      border-color: var(--clr-primary-2);
+      color: #fff;
+    }
+    .action-btn .ab-icon { font-size: 1rem; }
+
+    .desc {
+      color: var(--clr-text-muted); line-height: 1.7;
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border-2);
+      padding: 20px; border-radius: 14px;
+      margin-bottom: 40px;
+    }
+
+    /* Shortcuts hint */
+    .shortcuts {
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border-2);
+      border-radius: 14px; padding: 16px 20px;
+      margin-bottom: 40px;
+    }
+    .shortcuts h4 {
+      font-size: 0.8rem; text-transform: uppercase;
+      letter-spacing: 2px; color: var(--clr-text-muted);
+      margin-bottom: 12px;
+    }
+    .sc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .sc-item { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+    .sc-key {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--clr-border-2);
+      padding: 3px 9px; border-radius: 6px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.78rem; color: var(--clr-text);
+      min-width: 28px; text-align: center;
+    }
+    .sc-label { color: var(--clr-text-muted); }
+
+    /* You might also like */
+    .rail-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 16px; }
+    .rail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .rail-empty {
+      text-align: center; padding: 30px;
+      color: var(--clr-text-muted);
+      border: 1px dashed var(--clr-border-2);
+      border-radius: 14px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--clr-card);
+      border: 1px solid var(--clr-primary-2);
+      padding: 12px 20px; border-radius: 99px;
+      font-size: 0.88rem; font-weight: 600;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .not-found { text-align: center; padding: 80px 20px; }
+    .not-found h1 { font-size: 2rem; margin-bottom: 10px; }
+    .not-found p { color: var(--clr-text-muted); margin-bottom: 24px; }
+
+    @media (max-width: 640px) {
+      .meta-head h1 { font-size: 1.5rem; }
+      .action-btn { padding: 8px 14px; font-size: 0.82rem; }
+      .resume-banner { left: 10px; right: 10px; bottom: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="watch-nav">
+  <a href="../index.html" class="nav-logo"><span class="logo-c">C</span>ineVerse</a>
+  <div style="display:flex;gap:10px;">
+    <a href="../index.html" class="btn-outline" style="padding:8px 16px;font-size:0.85rem;">← Back</a>
+  </div>
+</nav>
+
+<div class="watch-wrap" id="watch-wrap"></div>
+<div id="toast" class="toast"></div>
+
+<script src="../js/store.js"></script>
+<script>
+  const PROGRESS_KEY = 'cineverse_progress_v1';
+  const FAV_KEY_BASE = 'cineverse_faves_';
+
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  const wrap = document.getElementById('watch-wrap');
+  const video = id ? CineStore.getById(id) : null;
+
+  if (!video) {
+    wrap.innerHTML = `
+      <div class="not-found">
+        <h1>Video not found</h1>
+        <p>This video may have been removed or hasn't been uploaded yet.</p>
+        <a href="../index.html" class="btn-primary">← Back to Home</a>
+      </div>`;
+  } else {
+    renderVideo(video);
+  }
+
+  // ---------- helpers ----------
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+  function fmtTime(sec) {
+    if (!sec || !isFinite(sec)) return '0:00';
+    sec = Math.floor(sec);
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(s).padStart(2,'0');
+  }
+  // ───── Rainbow audio spectrum visualizer (vertical side columns) ─────
+  function initRainbowVisualizer(videoEl) {
+    const panes = [
+      { el: document.getElementById('viz-canvas-left'),  side: 'left'  },
+      { el: document.getElementById('viz-canvas-right'), side: 'right' },
+    ].filter(p => p.el);
+    if (!panes.length) return;
+
+    panes.forEach(p => { p.ctx = p.el.getContext('2d'); });
+
+    let audioCtx, analyser, srcNode, dataArr;
+    let rafId = 0, started = false;
+
+    function sizeCanvases() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      panes.forEach(p => {
+        const r = p.el.getBoundingClientRect();
+        p.w = r.width;  p.h = r.height;
+        p.el.width  = Math.floor(r.width  * dpr);
+        p.el.height = Math.floor(r.height * dpr);
+        p.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      });
+    }
+    sizeCanvases();
+    window.addEventListener('resize', sizeCanvases);
+
+    function ensureAudio() {
+      if (started) return true;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return false;
+        audioCtx = new AC();
+        srcNode  = audioCtx.createMediaElementSource(videoEl);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 128;
+        analyser.smoothingTimeConstant = 0.82;
+        srcNode.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        dataArr = new Uint8Array(analyser.frequencyBinCount);
+        started = true;
+        return true;
+      } catch (_) {
+        drawStatic();
+        return false;
+      }
+    }
+
+    function drawPane(p, getAmp) {
+      const { ctx, w, h } = p;
+      ctx.clearRect(0, 0, w, h);
+
+      // Vertical bars — stacked top→bottom.
+      // Cap bar count so tall panes don't explode CPU cost on resize.
+      const bars = Math.min(40, Math.max(18, Math.floor(h / 12)));
+      const gap  = 2;
+      const barH = Math.max(3, (h - gap * (bars - 1)) / bars);
+      const hueShift = (performance.now() / 40) % 360;
+
+      for (let i = 0; i < bars; i++) {
+        const amp = getAmp(i / bars);
+        const len = Math.max(2, amp * (w - 6));
+        const hue = ((p.side === 'right' ? (1 - i / bars) : (i / bars)) * 320 + hueShift) % 360;
+        const y = i * (barH + gap);
+        const x = p.side === 'right' ? (w - len) : 0;
+
+        // Solid hsl fill — no gradient, no shadowBlur.
+        // shadowBlur is the #1 canvas perf killer; a flat fill is ~10× cheaper.
+        ctx.fillStyle = `hsl(${hue}, 95%, 60%)`;
+        ctx.fillRect(x, y, len, barH);
+      }
+    }
+
+    function liveAmp(t) {
+      if (!dataArr) return 0;
+      const idx = Math.min(dataArr.length - 1, Math.floor(t * dataArr.length));
+      return dataArr[idx] / 255;
+    }
+
+    function drawBars() {
+      rafId = requestAnimationFrame(drawBars);
+      if (document.hidden) return; // skip paint while tab/page is hidden
+      if (!analyser) return;
+      analyser.getByteFrequencyData(dataArr);
+      panes.forEach(p => drawPane(p, liveAmp));
+    }
+
+    // Static idle frame — a single paint, no rAF loop.
+    function drawStatic() {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+      panes.forEach(p => {
+        drawPane(p, (x) => (Math.sin(x * 6) * 0.5 + 0.5) * 0.25 + 0.05);
+      });
+    }
+    drawStatic();
+
+    function kickOff() {
+      if (!ensureAudio()) return;
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      cancelAnimationFrame(rafId);
+      drawBars();
+    }
+
+    videoEl.addEventListener('play',    kickOff);
+    videoEl.addEventListener('playing', kickOff);
+    videoEl.addEventListener('pause',   () => { cancelAnimationFrame(rafId); drawStatic(); });
+    videoEl.addEventListener('ended',   () => { cancelAnimationFrame(rafId); drawStatic(); });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      } else if (!videoEl.paused && !videoEl.ended) {
+        cancelAnimationFrame(rafId);
+        drawBars();
+      } else {
+        drawStatic();
+      }
+    });
+  }
+
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+  function readProgress() {
+    try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; }
+    catch(_) { return {}; }
+  }
+  function writeProgress(obj) {
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(obj)); } catch(_) {}
+  }
+  function getProgress(vid) { return readProgress()[vid] || null; }
+  function saveProgress(vid, t, d) {
+    const all = readProgress();
+    all[vid] = { t: Math.floor(t), d: Math.floor(d || 0), updated: Date.now() };
+    writeProgress(all);
+  }
+  function clearProgress(vid) {
+    const all = readProgress();
+    delete all[vid];
+    writeProgress(all);
+  }
+  function favKey() {
+    const u = CineStore.currentUser && CineStore.currentUser();
+    return FAV_KEY_BASE + (u ? u.id : 'guest');
+  }
+  function readFaves() {
+    try { return JSON.parse(localStorage.getItem(favKey())) || []; }
+    catch(_) { return []; }
+  }
+  function isFav(vid) { return readFaves().includes(vid); }
+  function toggleFav(vid) {
+    const faves = readFaves();
+    const i = faves.indexOf(vid);
+    if (i >= 0) faves.splice(i, 1); else faves.unshift(vid);
+    localStorage.setItem(favKey(), JSON.stringify(faves));
+    return i < 0;
+  }
+
+  // ---------- render ----------
+  async function renderVideo(v) {
+    document.title = v.title + ' – CineVerse';
+    const resolved = await CineStore.getPlayableSrc(v);
+
+    let playerHTML = '';
+    if (resolved.missing) {
+      playerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;
+                    color:var(--clr-text-muted);text-align:center;padding:20px;">
+          <div>
+            <div style="font-size:2.5rem;margin-bottom:10px;">⚠</div>
+            <div style="font-weight:700;margin-bottom:6px;">Video file missing</div>
+            <div style="font-size:0.85rem;">The uploaded file is no longer in this browser's storage.</div>
+          </div>
+        </div>`;
+    } else if (resolved.type === 'youtube' || resolved.type === 'iframe') {
+      const isDrive = /drive\.google\.com/i.test(resolved.src);
+      playerHTML = `<iframe src="${resolved.src}" allowfullscreen
+                            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>` +
+                   (isDrive ? '<div class="iframe-shield" title=""></div>' : '');
+    } else {
+      const posterAttr = v.thumbUrl ? ` poster="${String(v.thumbUrl).replace(/"/g, '&quot;')}"` : '';
+      playerHTML = `<video id="player" src="${resolved.src}"${posterAttr} controls autoplay playsinline></video>
+                    <div class="progress-preview"><div class="pp-fill" id="pp-fill"></div></div>`;
+    }
+
+    const fav = isFav(v.id);
+    const isNative = resolved.type !== 'youtube' && resolved.type !== 'iframe' && !resolved.missing;
+
+    wrap.innerHTML = `
+      ${isNative ? `
+      <div class="player-shell">
+        <div class="viz-side" id="viz-left">
+          <div class="viz-label">Audio</div>
+          <canvas id="viz-canvas-left"></canvas>
+        </div>
+        <div class="player-box" id="player-box">
+          ${playerHTML}
+        </div>
+        <div class="viz-side" id="viz-right">
+          <div class="viz-label">Spectrum</div>
+          <canvas id="viz-canvas-right"></canvas>
+        </div>
+      </div>` : `
+      <div class="player-box" id="player-box">
+        ${playerHTML}
+      </div>`}
+
+      <div class="meta-head">
+        <h1>${escapeHtml(v.title)}</h1>
+      </div>
+
+      <div class="meta-row" id="meta-row">
+        <span id="rating-chip"></span>
+        <span>${escapeHtml(v.year)}</span>
+        <span>${escapeHtml(v.genre)}</span>
+        <span class="tag">${escapeHtml(v.category)}</span>
+        ${v.promoted ? '<span class="tag promoted-tag">★ Promoted</span>' : ''}
+        ${v.badge ? `<span class="tag badge-tag">${escapeHtml(v.badge)}</span>` : ''}
+      </div>
+
+      <div class="action-row">
+        <button class="action-btn ${fav ? 'active' : ''}" id="btn-fav">
+          <span class="ab-icon">${fav ? '❤' : '♡'}</span>
+          <span id="btn-fav-label">${fav ? 'In favorites' : 'Add to favorites'}</span>
+        </button>
+        <button class="action-btn" id="btn-share">
+          <span class="ab-icon">↗</span><span>Share</span>
+        </button>
+        ${isNative ? `
+        <button class="action-btn" id="btn-mini" title="Keep playing while browsing other pages">
+          <span class="ab-icon">❐</span><span>Mini Player</span>
+        </button>
+        <button class="action-btn" id="btn-restart" title="Restart from beginning">
+          <span class="ab-icon">↺</span><span>Restart</span>
+        </button>` : ''}
+      </div>
+
+      <div class="desc">${v.description ? escapeHtml(v.description) : 'No description provided.'}</div>
+
+      <!-- User rating -->
+      <div class="engage-card">
+        <h3>⭐ Rate this</h3>
+        <div class="rate-row">
+          <div class="rate-summary">
+            <div class="rate-big" id="rate-big">—</div>
+            <div class="rate-sub" id="rate-sub">No ratings yet</div>
+          </div>
+          <div class="star-pick" id="star-pick" aria-label="Pick a rating">
+            ${[1,2,3,4,5].map(n => `<button type="button" data-v="${n}" title="${n} star${n===1?'':'s'}">☆</button>`).join('')}
+          </div>
+          <button type="button" id="clear-rating"
+            style="background:none;border:none;color:var(--clr-text-muted);
+            font-size:0.8rem;cursor:pointer;text-decoration:underline;font-family:inherit;display:none;">
+            Remove my rating
+          </button>
+        </div>
+      </div>
+
+      <!-- Comments -->
+      <div class="engage-card">
+        <h3>💬 Comments (<span id="comments-count">0</span>)</h3>
+        <div id="quick-reactions"></div>
+        <div id="comment-form-wrap"></div>
+        <div class="comments-list" id="comments-list"></div>
+      </div>
+
+      ${isNative ? `
+      <div class="shortcuts">
+        <h4>⌨ Keyboard shortcuts</h4>
+        <div class="sc-grid">
+          <div class="sc-item"><span class="sc-key">Space</span><span class="sc-label">Play / Pause</span></div>
+          <div class="sc-item"><span class="sc-key">K</span><span class="sc-label">Play / Pause</span></div>
+          <div class="sc-item"><span class="sc-key">←</span><span class="sc-label">Back 10 s</span></div>
+          <div class="sc-item"><span class="sc-key">→</span><span class="sc-label">Forward 10 s</span></div>
+          <div class="sc-item"><span class="sc-key">J</span><span class="sc-label">Back 10 s</span></div>
+          <div class="sc-item"><span class="sc-key">L</span><span class="sc-label">Forward 10 s</span></div>
+          <div class="sc-item"><span class="sc-key">↑</span><span class="sc-label">Volume +</span></div>
+          <div class="sc-item"><span class="sc-key">↓</span><span class="sc-label">Volume −</span></div>
+          <div class="sc-item"><span class="sc-key">M</span><span class="sc-label">Mute</span></div>
+          <div class="sc-item"><span class="sc-key">F</span><span class="sc-label">Fullscreen</span></div>
+          <div class="sc-item"><span class="sc-key">0–9</span><span class="sc-label">Jump to %</span></div>
+        </div>
+      </div>` : ''}
+
+      <h2 class="rail-title">You might also like</h2>
+      <div id="rail"></div>
+    `;
+
+    wireActions(v, resolved);
+    if (isNative) wirePlayer(v);
+    renderRail(v);
+    renderRatingChip(v);
+    wireRating(v);
+    renderComments(v);
+    wireCommentForm(v);
+    renderQuickReactions(v);
+
+    if (resolved.revoke) {
+      window.addEventListener('beforeunload', resolved.revoke);
+    }
+  }
+
+  function wireActions(v, resolved) {
+    // Favorite
+    const favBtn = document.getElementById('btn-fav');
+    favBtn.addEventListener('click', () => {
+      const now = toggleFav(v.id);
+      favBtn.classList.toggle('active', now);
+      favBtn.querySelector('.ab-icon').textContent = now ? '❤' : '♡';
+      document.getElementById('btn-fav-label').textContent =
+        now ? 'In favorites' : 'Add to favorites';
+      toast(now ? 'Added to favorites' : 'Removed from favorites');
+    });
+
+    // Share (copy link)
+    document.getElementById('btn-share').addEventListener('click', async () => {
+      const url = window.location.href;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: v.title, url });
+        } else {
+          await navigator.clipboard.writeText(url);
+          toast('Link copied to clipboard');
+        }
+      } catch (_) {
+        try {
+          await navigator.clipboard.writeText(url);
+          toast('Link copied to clipboard');
+        } catch(e) { toast('Could not copy link'); }
+      }
+    });
+
+    // Mini Player: hand off to the floating mini-player and go home
+    const miniBtn = document.getElementById('btn-mini');
+    if (miniBtn) miniBtn.addEventListener('click', () => {
+      const p = document.getElementById('player');
+      if (!p) return;
+      const state = {
+        id: v.id,
+        t: p.currentTime || 0,
+        playing: !p.paused,
+        thumb: v.thumbUrl || '',
+      };
+      try { sessionStorage.setItem('cineverse_miniplayer_v1', JSON.stringify(state)); } catch(_) {}
+      p.pause();
+      window.location.href = '../index.html';
+    });
+
+    const restartBtn = document.getElementById('btn-restart');
+    if (restartBtn) restartBtn.addEventListener('click', () => {
+      const p = document.getElementById('player');
+      if (!p) return;
+      p.currentTime = 0; p.play();
+      clearProgress(v.id);
+      toast('Restarted from beginning');
+    });
+  }
+
+  // ---------- Rating ----------
+  function renderRatingChip(v) {
+    const chip = document.getElementById('rating-chip');
+    const stats = CineStore.getRatingStats(v.id);
+    if (stats.count) {
+      chip.className = 'meta-rating';
+      chip.textContent = `★ ${stats.avg.toFixed(1)} (${stats.count})`;
+    } else {
+      chip.className = 'meta-rating muted';
+      chip.textContent = '★ Not rated';
+    }
+  }
+
+  function wireRating(v) {
+    const user = CineStore.currentUser();
+    const pick = document.getElementById('star-pick');
+    const big  = document.getElementById('rate-big');
+    const sub  = document.getElementById('rate-sub');
+    const clear = document.getElementById('clear-rating');
+    const buttons = pick.querySelectorAll('button');
+
+    function refreshSummary() {
+      const stats = CineStore.getRatingStats(v.id);
+      if (stats.count) {
+        big.innerHTML = `<span class="star-icon">★</span> ${stats.avg.toFixed(1)}`;
+        sub.textContent = `${stats.count} rating${stats.count === 1 ? '' : 's'}`;
+      } else {
+        big.textContent = '—';
+        sub.textContent = 'Be the first to rate it';
+      }
+      renderRatingChip(v);
+    }
+
+    function paintStars(n) {
+      buttons.forEach((b, i) => {
+        b.classList.toggle('on', i < n);
+        b.textContent = i < n ? '★' : '☆';
+      });
+    }
+
+    refreshSummary();
+
+    if (!user) {
+      buttons.forEach(b => {
+        b.disabled = true;
+        b.title = 'Sign in to rate';
+        b.style.cursor = 'not-allowed';
+      });
+      pick.addEventListener('click', () => {
+        toast('Sign in to rate');
+      });
+      return;
+    }
+
+    const current = CineStore.getUserRating(v.id, user.id);
+    paintStars(current);
+    clear.style.display = current ? '' : 'none';
+
+    // Hover preview
+    buttons.forEach(btn => {
+      const n = parseInt(btn.dataset.v, 10);
+      btn.addEventListener('mouseenter', () => {
+        buttons.forEach((b, i) => {
+          b.classList.toggle('hover', i < n);
+          b.textContent = i < n ? '★' : '☆';
+        });
+      });
+      btn.addEventListener('mouseleave', () => {
+        buttons.forEach(b => b.classList.remove('hover'));
+        const my = CineStore.getUserRating(v.id, user.id);
+        paintStars(my);
+      });
+      btn.addEventListener('click', () => {
+        CineStore.rateVideo(v.id, user.id, n);
+        paintStars(n);
+        clear.style.display = '';
+        refreshSummary();
+        renderQuickReactions(v);
+        toast(`Rated ${n} star${n === 1 ? '' : 's'}`);
+      });
+    });
+
+    clear.addEventListener('click', () => {
+      CineStore.clearRating(v.id, user.id);
+      paintStars(0);
+      clear.style.display = 'none';
+      refreshSummary();
+      renderQuickReactions(v);
+      toast('Rating removed');
+    });
+  }
+
+  // ---------- Quick-reaction chips tied to star rating ----------
+  const QUICK_REACTIONS = {
+    1: [
+      "Honestly not for me 😕",
+      "Hard to sit through",
+      "Didn't enjoy it at all",
+      "Waste of time, sorry",
+      "Couldn't finish this one",
+    ],
+    2: [
+      "Had some rough moments",
+      "Below average for me",
+      "Interesting idea, weak result",
+      "A few good parts, mostly meh",
+      "Wouldn't rewatch",
+    ],
+    3: [
+      "It was okay 👍",
+      "Watchable but forgettable",
+      "Decent for a one-time watch",
+      "Middle of the road",
+      "Had its ups and downs",
+    ],
+    4: [
+      "Really enjoyed this! 🎬",
+      "Solid movie, would recommend",
+      "Great story and acting",
+      "Fun from start to finish",
+      "Would definitely rewatch",
+    ],
+    5: [
+      "Absolute masterpiece 🔥",
+      "Couldn't stop watching! 🤩",
+      "A+ — instant favorite",
+      "Perfect in every way ⭐",
+      "One of the best I've seen!",
+    ],
+  };
+
+  function renderQuickReactions(v) {
+    const wrap = document.getElementById('quick-reactions');
+    if (!wrap) return;
+
+    const user = CineStore.currentUser();
+    if (!user) { wrap.innerHTML = ''; return; }
+
+    const myRating = CineStore.getUserRating(v.id, user.id);
+    if (!myRating) {
+      wrap.innerHTML = `
+        <div class="qr-locked">
+          💡 <b>Tip:</b> rate this video above to unlock quick reaction comments tuned to your rating.
+        </div>`;
+      return;
+    }
+
+    const stars = '★'.repeat(myRating) + '☆'.repeat(5 - myRating);
+    const options = QUICK_REACTIONS[myRating] || [];
+    wrap.innerHTML = `
+      <div class="qr-wrap">
+        <div class="qr-head">
+          <div class="qr-title"><span class="qr-stars">${stars}</span> Quick reactions for your ${myRating}-star rating</div>
+          <div class="qr-sub">Tap one to post instantly — or type your own below</div>
+        </div>
+        <div class="qr-chips">
+          ${options.map((text, i) => `<button type="button" class="qr-chip" data-i="${i}">${escapeHtml(text)}</button>`).join('')}
+        </div>
+      </div>`;
+
+    wrap.querySelectorAll('.qr-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const text = options[parseInt(chip.dataset.i, 10)];
+        CineStore.addComment(v.id, user.id, user.name, text);
+        renderComments(v);
+        toast('Posted your reaction');
+      });
+    });
+  }
+
+  // ---------- Comments ----------
+  function renderComments(v) {
+    const list = document.getElementById('comments-list');
+    const count = document.getElementById('comments-count');
+    const comments = CineStore.getComments(v.id);
+    count.textContent = comments.length;
+
+    const user = CineStore.currentUser();
+    const isAdmin = CineStore.isAdmin && CineStore.isAdmin();
+
+    if (!comments.length) {
+      list.innerHTML = '<div class="comments-empty">No comments yet. Start the conversation ↑</div>';
+      return;
+    }
+
+    list.innerHTML = comments.map(c => {
+      const inits = (c.userName || '?').trim().split(/\s+/)
+        .map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+      const when = relTime(c.createdAt);
+      const canDelete = isAdmin || (user && user.id === c.userId);
+      return `
+        <div class="comment-item">
+          <div class="ci-head">
+            <div class="ci-avatar">${escapeHtml(inits)}</div>
+            <div class="ci-user">${escapeHtml(c.userName)}</div>
+            <div class="ci-time">${when}</div>
+            ${canDelete ? `<button class="ci-del" data-cid="${c.id}">Delete</button>` : ''}
+          </div>
+          <div class="ci-text">${escapeHtml(c.text)}</div>
+        </div>`;
+    }).join('');
+
+    list.querySelectorAll('.ci-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        CineStore.deleteComment(v.id, btn.dataset.cid);
+        renderComments(v);
+        toast('Comment deleted');
+      });
+    });
+  }
+
+  function wireCommentForm(v) {
+    const wrap = document.getElementById('comment-form-wrap');
+    const user = CineStore.currentUser();
+
+    if (!user) {
+      wrap.innerHTML = `
+        <div class="signin-nudge">
+          <a href="login.html">Sign in</a> to leave a comment.
+        </div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <form class="comment-form" id="comment-form">
+        <textarea id="comment-text" placeholder="Share your thoughts on this…" maxlength="1000"></textarea>
+        <div class="cf-row">
+          <span class="cf-hint" id="cf-hint">Commenting as <b>${escapeHtml(user.name)}</b> · up to 1000 characters</span>
+          <button type="submit" disabled>Post comment</button>
+        </div>
+      </form>`;
+
+    const form = document.getElementById('comment-form');
+    const ta   = document.getElementById('comment-text');
+    const hint = document.getElementById('cf-hint');
+    const sub  = form.querySelector('button[type="submit"]');
+
+    ta.addEventListener('input', () => {
+      const len = ta.value.trim().length;
+      sub.disabled = len === 0;
+      hint.textContent = len
+        ? `${len} / 1000`
+        : `Commenting as ${user.name} · up to 1000 characters`;
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = ta.value.trim();
+      if (!text) return;
+      CineStore.addComment(v.id, user.id, user.name, text);
+      ta.value = '';
+      sub.disabled = true;
+      hint.textContent = `Commenting as ${user.name} · up to 1000 characters`;
+      renderComments(v);
+      toast('Comment posted');
+    });
+  }
+
+  function relTime(iso) {
+    const then = new Date(iso).getTime();
+    if (!then) return '';
+    const diff = Date.now() - then;
+    const s = Math.floor(diff / 1000);
+    if (s < 60) return 'just now';
+    const m = Math.floor(s / 60);
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    const d = Math.floor(h / 24);
+    if (d < 30) return d + 'd ago';
+    return new Date(iso).toLocaleDateString();
+  }
+
+  function toggleFullscreen(p) {
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        exit && exit.call(document);
+        return;
+      }
+      // Prefer the wrapper so controls + visualizer go fullscreen together.
+      const box = document.getElementById('player-box');
+      const target = (box && p && p.tagName !== 'IFRAME') ? box : p;
+      const req = target.requestFullscreen || target.webkitRequestFullscreen;
+      if (!req) return;
+      const result = req.call(target);
+      if (result && typeof result.catch === 'function') result.catch(() => {});
+    } catch (_) { /* ignore */ }
+  }
+
+  function wirePlayer(v) {
+    const p = document.getElementById('player');
+    const ppFill = document.getElementById('pp-fill');
+    if (!p) return;
+
+    initRainbowVisualizer(p);
+
+    // Auto-thumbnail overlay when paused
+    const box = document.getElementById('player-box');
+    const posterBgStyle = v.thumbUrl
+      ? `background-image:url('${String(v.thumbUrl).replace(/'/g,"\\'")}');`
+      : `background:linear-gradient(145deg,${v.color || '#5a2a99'}cc,#070710);`;
+    const posterBody = v.thumbUrl
+      ? '<div class="pp-play">▶</div>'
+      : `<div class="pp-fallback">${escapeHtml((v.title || '?').slice(0, 2).toUpperCase())}</div>`;
+
+    function showPausePoster() {
+      if (!box || box.querySelector('.pause-poster')) return;
+      if (box.querySelector('.resume-banner')) return; // don't double-up
+      const ov = document.createElement('div');
+      ov.className = 'pause-poster';
+      ov.setAttribute('style', posterBgStyle);
+      ov.innerHTML = posterBody;
+      ov.addEventListener('click', () => { p.play(); });
+      box.appendChild(ov);
+    }
+    function hidePausePoster() {
+      const ov = box && box.querySelector('.pause-poster');
+      if (ov) ov.remove();
+    }
+    p.addEventListener('pause', () => {
+      // Ignore "pause" fired right before seeking or ending
+      if (p.ended) { showPausePoster(); return; }
+      showPausePoster();
+    });
+    p.addEventListener('play',    hidePausePoster);
+    p.addEventListener('playing', hidePausePoster);
+    p.addEventListener('seeking', hidePausePoster);
+
+    // Resume from saved position
+    const saved = getProgress(v.id);
+    p.addEventListener('loadedmetadata', () => {
+      if (!saved || !saved.t || saved.t < 10) return;
+      // Only show banner if there's meaningful time and it's not at the end
+      if (p.duration && saved.t < p.duration - 15) {
+        showResumeBanner(p, saved);
+      }
+    });
+
+    // Save progress periodically
+    let lastSave = 0;
+    p.addEventListener('timeupdate', () => {
+      const now = Date.now();
+      if (now - lastSave > 3000 && p.currentTime > 3) {
+        lastSave = now;
+        saveProgress(v.id, p.currentTime, p.duration);
+      }
+      if (ppFill && p.duration) {
+        ppFill.style.width = (p.currentTime / p.duration * 100) + '%';
+      }
+    });
+    p.addEventListener('pause', () => {
+      if (p.currentTime > 3) saveProgress(v.id, p.currentTime, p.duration);
+    });
+    p.addEventListener('ended', () => clearProgress(v.id));
+    window.addEventListener('beforeunload', () => {
+      if (p.currentTime > 3 && !p.ended) saveProgress(v.id, p.currentTime, p.duration);
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.target.matches('input, textarea, select, [contenteditable]')) return;
+      const k = e.key;
+      switch (k) {
+        case ' ': case 'k': case 'K':
+          e.preventDefault();
+          p.paused ? p.play() : p.pause();
+          break;
+        case 'ArrowLeft': case 'j': case 'J':
+          e.preventDefault();
+          p.currentTime = Math.max(0, p.currentTime - 10);
+          toast('⏪ −10 s');
+          break;
+        case 'ArrowRight': case 'l': case 'L':
+          e.preventDefault();
+          p.currentTime = Math.min(p.duration || 0, p.currentTime + 10);
+          toast('⏩ +10 s');
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          p.volume = Math.min(1, p.volume + 0.1);
+          toast('🔊 ' + Math.round(p.volume * 100) + '%');
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          p.volume = Math.max(0, p.volume - 0.1);
+          toast('🔊 ' + Math.round(p.volume * 100) + '%');
+          break;
+        case 'm': case 'M':
+          e.preventDefault();
+          p.muted = !p.muted;
+          toast(p.muted ? '🔇 Muted' : '🔊 Unmuted');
+          break;
+        case 'f': case 'F':
+          e.preventDefault();
+          toggleFullscreen(p);
+          break;
+        default:
+          if (/^[0-9]$/.test(k) && p.duration) {
+            e.preventDefault();
+            p.currentTime = p.duration * (Number(k) / 10);
+          }
+      }
+    });
+  }
+
+  function showResumeBanner(p, saved) {
+    const box = document.getElementById('player-box');
+    if (!box || box.querySelector('.resume-banner')) return;
+    const banner = document.createElement('div');
+    banner.className = 'resume-banner';
+    banner.innerHTML = `
+      <div>
+        <div class="rb-text">Resume from ${fmtTime(saved.t)}?</div>
+        <div class="rb-sub">You left off partway through</div>
+      </div>
+      <button class="rb-resume">▶ Resume</button>
+      <button class="rb-dismiss">Start over</button>`;
+    box.appendChild(banner);
+    p.pause();
+    banner.querySelector('.rb-resume').addEventListener('click', () => {
+      p.currentTime = saved.t;
+      p.play();
+      banner.remove();
+    });
+    banner.querySelector('.rb-dismiss').addEventListener('click', () => {
+      p.currentTime = 0;
+      p.play();
+      banner.remove();
+    });
+    // Auto-dismiss after 15 s of no interaction → resume by default
+    setTimeout(() => {
+      if (banner.isConnected) {
+        p.currentTime = saved.t;
+        p.play();
+        banner.remove();
+      }
+    }, 15000);
+  }
+
+  // ---------- Related rail ----------
+  function renderRail(current) {
+    const rail = document.getElementById('rail');
+    const all = CineStore.getAll().filter(x => x.id !== current.id);
+    // Score: same category +2, same genre +3, recent +1
+    const scored = all.map(v => {
+      let s = 0;
+      if ((v.category || '').toLowerCase() === (current.category || '').toLowerCase()) s += 2;
+      if ((v.genre || '').toLowerCase() === (current.genre || '').toLowerCase())       s += 3;
+      return { v, s };
+    }).sort((a, b) => b.s - a.s || (b.v.createdAt || '').localeCompare(a.v.createdAt || ''));
+    const picks = scored.slice(0, 6).map(x => x.v);
+
+    if (!picks.length) {
+      rail.innerHTML = '<div class="rail-empty">No other titles in the library yet.</div>';
+      return;
+    }
+
+    rail.className = 'rail-grid';
+    rail.innerHTML = picks.map(v => {
+      const prog = getProgress(v.id);
+      const progPct = (prog && prog.d) ? Math.min(100, Math.round(prog.t / prog.d * 100)) : 0;
+      const thumb = v.thumbUrl
+        ? `<div style="width:100%;aspect-ratio:2/3;background-image:url('${String(v.thumbUrl).replace(/'/g,"\\'")}');background-size:cover;background-position:center;"></div>`
+        : `<div style="width:100%;aspect-ratio:2/3;background:linear-gradient(145deg,${v.color||'#5a2a99'}cc,#070710);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.85);font-weight:900;font-size:2rem;">${escapeHtml((v.title||'?').slice(0,2).toUpperCase())}</div>`;
+      return `
+        <a href="watch.html?id=${encodeURIComponent(v.id)}" class="movie-card" style="text-decoration:none;color:inherit;display:block;position:relative;">
+          <div class="card-thumb" style="position:relative;">
+            ${thumb}
+            <div class="card-overlay"><div class="card-play-btn">▶</div></div>
+            ${progPct > 0 ? `<div style="position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(0,0,0,0.5);"><div style="height:100%;width:${progPct}%;background:var(--clr-primary-2);"></div></div>` : ''}
+          </div>
+          <div class="card-info">
+            <div class="card-title">${escapeHtml(v.title)}</div>
+            <div class="card-meta">
+              <span>${escapeHtml(v.category||'')}</span>
+              <span>·</span><span>${escapeHtml(v.genre||'')}</span>
+            </div>
+          </div>
+        </a>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>

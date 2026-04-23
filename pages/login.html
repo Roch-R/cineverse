@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sign in to CineVerse to access your personal streaming library." />
+  <title>Sign In – CineVerse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/auth.css" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-bg-glow"></div>
+    <div class="auth-bg-glow-2"></div>
+    <div class="auth-card">
+      <a href="../index.html" class="auth-logo nav-logo">
+        <span class="logo-c">C</span>ineVerse
+      </a>
+      <h1 class="auth-title">Welcome Back</h1>
+      <p class="auth-subtitle">Sign in to continue watching</p>
+
+      <form class="auth-form" id="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="login-email">Email Address</label>
+          <input type="email" id="login-email" class="form-input" placeholder="you@example.com" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <input type="password" id="login-password" class="form-input" placeholder="At least 6 characters" autocomplete="current-password" required minlength="6" />
+          <div class="form-forgot"><a href="#" id="forgot-link">Forgot password?</a></div>
+        </div>
+        <div class="auth-msg" id="auth-msg"></div>
+        <button type="submit" class="btn-primary auth-submit" id="login-submit">Sign In</button>
+      </form>
+
+      <div class="auth-divider" style="margin-top:20px">or</div>
+      <p class="auth-switch">
+        Don't have an account? <a href="register.html">Sign up free</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="../js/store.js"></script>
+  <script>
+    // Already signed in? Go straight to dashboard.
+    if (CineStore.currentUser()) {
+      window.location.replace('dashboard.html');
+    }
+
+    const form  = document.getElementById('login-form');
+    const msg   = document.getElementById('auth-msg');
+    const btn   = document.getElementById('login-submit');
+    const email = document.getElementById('login-email');
+    const pw    = document.getElementById('login-password');
+
+    function setMsg(text, type) {
+      msg.textContent = text || '';
+      msg.className = 'auth-msg' + (type ? ' ' + type : '');
+    }
+
+    // Prefill email from query string (e.g. after register redirect)
+    const qEmail = new URLSearchParams(location.search).get('email');
+    if (qEmail) email.value = qEmail;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setMsg('');
+      const emailVal = email.value.trim();
+      const pwVal = pw.value;
+      if (!emailVal || !pwVal) { setMsg('Please fill in both fields.', 'error'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+      const res = await CineStore.loginUser(emailVal, pwVal);
+      if (!res.ok) {
+        setMsg(res.error, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+        return;
+      }
+      setMsg('Welcome back, ' + res.user.name + '!', 'ok');
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 500);
+    });
+
+    document.getElementById('forgot-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      setMsg('Password recovery is not available in this offline build. Re-register a new account or contact your admin.', 'error');
+    });
+  </script>
+</body>
+</html>

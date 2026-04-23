@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel – CineVerse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/auth.css" />
+  <style>
+    body {
+      cursor: auto;
+      background-image:
+        linear-gradient(180deg, rgba(7,7,16,0.88) 0%, rgba(7,7,16,0.94) 60%, rgba(7,7,16,0.98) 100%),
+        url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1920&q=80');
+      background-size: cover;
+      background-position: center center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(900px 600px at 15% 0%, rgba(139,47,201,0.18), transparent 60%),
+        radial-gradient(700px 500px at 85% 100%, rgba(196,77,255,0.14), transparent 60%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    .admin-wrap { position: relative; z-index: 1; }
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 120px 24px 60px; }
+    .admin-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 30px; flex-wrap: wrap; gap: 12px;
+    }
+    .admin-header h1 { font-size: 2rem; font-weight: 800; }
+    .admin-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 28px; }
+    @media (max-width: 880px) { .admin-grid { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border-2);
+      border-radius: 18px;
+      padding: 24px;
+    }
+    .panel h2 { font-size: 1.2rem; margin-bottom: 18px; font-weight: 700; }
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block; font-size: 0.82rem; font-weight: 600;
+      color: var(--clr-text-muted); margin-bottom: 6px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 10px 12px; border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--clr-border-2);
+      color: var(--clr-text);
+      font-family: inherit; font-size: 0.92rem;
+    }
+    .field select { color-scheme: dark; }
+    .field select option {
+      background: #141022;
+      color: #f3eaff;
+      padding: 8px;
+    }
+    .field select option:hover,
+    .field select option:checked {
+      background: #2a1850;
+      color: #fff;
+    }
+    .field textarea { resize: vertical; min-height: 70px; }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none; border-color: var(--clr-primary-2);
+    }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .upload-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+    .upload-tabs button {
+      flex: 1; padding: 8px; border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--clr-border-2);
+      color: var(--clr-text-muted);
+      font-weight: 600; font-family: inherit; cursor: pointer;
+      font-size: 0.82rem;
+    }
+    .upload-tabs button.active {
+      background: var(--clr-primary); border-color: var(--clr-primary);
+      color: #fff;
+    }
+    .color-chip {
+      display: inline-block; width: 18px; height: 18px; border-radius: 4px;
+      vertical-align: middle; margin-right: 6px; border: 1px solid rgba(255,255,255,0.2);
+    }
+    .videos-list {
+      display: flex; flex-direction: column; gap: 10px; max-height: 540px; overflow-y: auto;
+    }
+    .video-item {
+      display: flex; gap: 12px; align-items: center;
+      padding: 10px; border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--clr-border-2);
+    }
+    .video-thumb {
+      width: 80px; height: 60px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; color: #fff; font-size: 1.1rem;
+    }
+    .video-meta { flex: 1; min-width: 0; }
+    .video-meta h4 {
+      font-size: 0.95rem; font-weight: 700;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .video-meta span {
+      font-size: 0.75rem; color: var(--clr-text-muted);
+      display: inline-block; margin-right: 8px;
+    }
+    .btn-del {
+      padding: 6px 12px; border-radius: 8px;
+      background: rgba(224,25,42,0.15);
+      border: 1px solid rgba(224,25,42,0.4);
+      color: #ff4d4d; font-weight: 700; font-family: inherit;
+      cursor: pointer; font-size: 0.8rem;
+    }
+    .btn-del:hover { background: rgba(224,25,42,0.3); }
+    .btn-edit {
+      padding: 6px 12px; border-radius: 8px;
+      background: rgba(77,196,255,0.15);
+      border: 1px solid rgba(77,196,255,0.4);
+      color: #66d4ff; font-weight: 700; font-family: inherit;
+      cursor: pointer; font-size: 0.8rem;
+      margin-right: 8px;
+    }
+    .btn-edit:hover { background: rgba(77,196,255,0.3); }
+    .btn-cancel-edit {
+      width: 100%; margin-top: 8px;
+      padding: 10px; border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--clr-border-2);
+      color: var(--clr-text); font-weight: 600; font-family: inherit;
+      cursor: pointer; font-size: 0.9rem;
+    }
+    .btn-cancel-edit:hover { background: rgba(255,255,255,0.1); }
+    .edit-banner {
+      padding: 10px 12px; border-radius: 10px;
+      background: rgba(77,196,255,0.08);
+      border: 1px dashed rgba(77,196,255,0.4);
+      color: #66d4ff; font-size: 0.85rem; font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .empty {
+      text-align: center; padding: 40px 20px;
+      color: var(--clr-text-muted); font-size: 0.9rem;
+    }
+    .gate {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .gate-card {
+      width: 100%; max-width: 400px;
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border-2);
+      border-radius: 18px; padding: 32px;
+      text-align: center;
+    }
+    .gate-card h1 { font-size: 1.6rem; margin-bottom: 8px; }
+    .gate-card p { color: var(--clr-text-muted); font-size: 0.9rem; margin-bottom: 20px; }
+    .msg { font-size: 0.82rem; margin-top: 10px; }
+    .msg.ok { color: #4ade80; }
+    .msg.err { color: #ff6b6b; }
+    .hint {
+      font-size: 0.72rem; color: var(--clr-text-muted);
+      margin-top: 4px; line-height: 1.4;
+    }
+    /* ===== Upload drop zone & progress ===== */
+    .drop-zone {
+      border: 2px dashed var(--clr-border-2);
+      border-radius: 12px; padding: 22px 16px;
+      text-align: center; cursor: pointer;
+      background: rgba(255,255,255,0.02);
+      transition: all 0.2s ease;
+    }
+    .drop-zone:hover, .drop-zone.drag {
+      border-color: var(--clr-primary-2);
+      background: rgba(139,47,201,0.08);
+    }
+    .drop-zone .dz-icon {
+      font-size: 1.8rem; margin-bottom: 6px;
+    }
+    .drop-zone .dz-title {
+      font-weight: 600; font-size: 0.92rem; margin-bottom: 4px;
+    }
+    .drop-zone .dz-sub {
+      font-size: 0.75rem; color: var(--clr-text-muted);
+    }
+    .drop-zone input[type="file"] { display: none; }
+    .file-info {
+      margin-top: 10px; padding: 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--clr-border-2);
+      display: none;
+    }
+    .file-info.show { display: block; }
+    .file-info.error {
+      border-color: rgba(224,25,42,0.5);
+      background: rgba(224,25,42,0.08);
+    }
+    .file-info.warn {
+      border-color: rgba(255,170,0,0.5);
+      background: rgba(255,170,0,0.08);
+    }
+    .file-info.ok {
+      border-color: rgba(74,222,128,0.4);
+      background: rgba(74,222,128,0.06);
+    }
+    .file-info .fi-head {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 6px;
+    }
+    .file-info .fi-name {
+      flex: 1; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-weight: 600; font-size: 0.88rem;
+    }
+    .file-info .fi-size {
+      font-size: 0.76rem; color: var(--clr-text-muted);
+      flex-shrink: 0;
+    }
+    .file-info .fi-msg {
+      font-size: 0.78rem; line-height: 1.4;
+    }
+    .file-info .fi-remove {
+      background: transparent; border: none; cursor: pointer;
+      color: var(--clr-text-muted); font-size: 1rem; padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .file-info .fi-remove:hover { color: #ff6b6b; background: rgba(255,255,255,0.05); }
+    .progress-wrap {
+      display: none; margin-top: 10px;
+    }
+    .progress-wrap.show { display: block; }
+    .progress-bar {
+      height: 8px; border-radius: 6px; overflow: hidden;
+      background: rgba(255,255,255,0.06);
+    }
+    .progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-2));
+      transition: width 0.15s ease;
+    }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.74rem; color: var(--clr-text-muted);
+      margin-top: 6px;
+    }
+    .btn-primary[disabled] {
+      opacity: 0.6; cursor: not-allowed;
+      pointer-events: none;
+    }
+    .btn-spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle; margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .host-help {
+      margin-top: 14px;
+      border: 1px solid var(--clr-border-2);
+      border-radius: 10px;
+      background: rgba(139,47,201,0.06);
+      padding: 10px 14px;
+    }
+    .host-help summary {
+      cursor: pointer; font-weight: 600; font-size: 0.88rem;
+      color: var(--clr-text); user-select: none; list-style: none;
+    }
+    .host-help summary::-webkit-details-marker { display: none; }
+    .host-help summary::before { content: '▸ '; color: var(--clr-primary-2); }
+    .host-help[open] summary::before { content: '▾ '; }
+    .host-help ol {
+      margin: 10px 0 6px 20px; font-size: 0.82rem; line-height: 1.6;
+      color: var(--clr-text-muted);
+    }
+    .host-help ol b { color: var(--clr-text); }
+    .host-help ol code {
+      background: rgba(255,255,255,0.06); padding: 1px 6px;
+      border-radius: 4px; font-size: 0.78rem;
+    }
+    .host-help-note {
+      font-size: 0.76rem; margin-top: 6px;
+      padding: 8px 10px; border-radius: 8px;
+      background: rgba(255,170,0,0.08);
+      border: 1px solid rgba(255,170,0,0.3);
+      color: #ffc66b;
+    }
+    /* Thumbnail picker */
+    .thumb-tab {
+      flex: 1; padding: 8px; border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--clr-border-2);
+      color: var(--clr-text-muted);
+      font-weight: 600; font-family: inherit; cursor: pointer;
+      font-size: 0.82rem;
+    }
+    .thumb-tab.active {
+      background: var(--clr-primary); border-color: var(--clr-primary);
+      color: #fff;
+    }
+    .thumb-preview {
+      margin-top: 10px; position: relative;
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--clr-border-2);
+      background: rgba(0,0,0,0.35);
+      max-width: 260px;
+      display: inline-block;
+    }
+    .thumb-preview img {
+      display: block;
+      max-width: 100%;
+      max-height: 360px;
+      width: auto; height: auto;
+    }
+    .thumb-preview .fi-remove {
+      position: absolute; top: 6px; right: 6px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .thumb-preview .fi-remove:hover {
+      background: rgba(224,25,42,0.8);
+    }
+    /* Card thumb in list */
+    .video-thumb.has-img {
+      background-size: cover !important;
+      background-position: center !important;
+      color: transparent;
+    }
+    /* ===== Modal dialog ===== */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(5,5,12,0.75);
+      backdrop-filter: blur(8px);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; transition: opacity 0.18s ease;
+    }
+    .modal-backdrop.show { display: flex; opacity: 1; }
+    .modal-card {
+      width: 100%; max-width: 420px;
+      background: linear-gradient(180deg, #14141e 0%, #0d0d15 100%);
+      border: 1px solid var(--clr-border-2);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+      transform: translateY(10px) scale(0.96);
+      transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    }
+    .modal-backdrop.show .modal-card { transform: translateY(0) scale(1); }
+    .modal-icon {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; margin-bottom: 14px;
+      background: rgba(139,47,201,0.15);
+      border: 1px solid rgba(139,47,201,0.35);
+    }
+    .modal-icon.danger {
+      background: rgba(224,25,42,0.15);
+      border-color: rgba(224,25,42,0.4);
+    }
+    .modal-icon.warn {
+      background: rgba(255,170,0,0.15);
+      border-color: rgba(255,170,0,0.4);
+    }
+    .modal-title {
+      font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;
+    }
+    .modal-body {
+      color: var(--clr-text-muted); font-size: 0.92rem; line-height: 1.55;
+      margin-bottom: 22px;
+    }
+    .modal-actions {
+      display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+    }
+    .modal-btn {
+      padding: 10px 20px; border-radius: 10px;
+      font-family: inherit; font-weight: 600; font-size: 0.9rem;
+      border: 1px solid transparent; cursor: pointer;
+      min-width: 96px;
+    }
+    .modal-btn.cancel {
+      background: rgba(255,255,255,0.04);
+      border-color: var(--clr-border-2);
+      color: var(--clr-text);
+    }
+    .modal-btn.cancel:hover { background: rgba(255,255,255,0.08); }
+    .modal-btn.confirm {
+      background: var(--clr-primary);
+      color: #fff;
+    }
+    .modal-btn.confirm.danger {
+      background: linear-gradient(135deg, #e0192a, #ff3d5a);
+    }
+    .modal-btn.confirm.warn {
+      background: linear-gradient(135deg, #f59e0b, #f5c518);
+      color: #1a1a1a;
+    }
+    .modal-btn.confirm:hover { filter: brightness(1.1); }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    /* ===== Image editor modal (crop-box style) ===== */
+    .editor-card {
+      width: 92vw;
+      max-width: 760px;
+      padding: 20px 22px;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .editor-card .modal-title { margin-bottom: 6px; font-size: 1.1rem; }
+    .editor-card .modal-body { margin-bottom: 10px; font-size: 0.85rem; }
+    .editor-card .editor-scroll {
+      flex: 1; overflow-y: auto; padding-right: 4px;
+      margin-right: -4px;
+    }
+    /* Stage — where the image is shown at "contain" fit */
+    .ed-stage {
+      position: relative;
+      width: 100%;
+      height: 50vh;
+      max-height: 480px;
+      min-height: 320px;
+      background: #0a0a12;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--clr-border-2);
+      margin: 0 auto 12px;
+      user-select: none;
+      touch-action: none;
+    }
+    .ed-stage img {
+      position: absolute;
+      pointer-events: none;
+      transform-origin: center center;
+      max-width: none;
+    }
+    /* Crop rectangle */
+    .ed-crop {
+      position: absolute;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+      cursor: move;
+      box-sizing: border-box;
+    }
+    /* Rule-of-thirds grid inside crop */
+    .ed-crop::before, .ed-crop::after {
+      content: '';
+      position: absolute; inset: 0;
+      pointer-events: none;
+    }
+    .ed-crop::before {
+      background:
+        linear-gradient(to right, rgba(255,255,255,0.45) 1px, transparent 1px) 33.33% 0 / 1px 100% no-repeat,
+        linear-gradient(to right, rgba(255,255,255,0.45) 1px, transparent 1px) 66.66% 0 / 1px 100% no-repeat,
+        linear-gradient(to bottom, rgba(255,255,255,0.45) 1px, transparent 1px) 0 33.33% / 100% 1px no-repeat,
+        linear-gradient(to bottom, rgba(255,255,255,0.45) 1px, transparent 1px) 0 66.66% / 100% 1px no-repeat;
+    }
+    /* Corner + edge handles */
+    .ed-handle {
+      position: absolute;
+      width: 14px; height: 14px;
+      background: #fff;
+      border: 2px solid var(--clr-primary-2);
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      z-index: 2;
+    }
+    .ed-handle.n  { top: -8px;    left: 50%;   transform: translateX(-50%); cursor: ns-resize; }
+    .ed-handle.s  { bottom: -8px; left: 50%;   transform: translateX(-50%); cursor: ns-resize; }
+    .ed-handle.w  { left: -8px;   top: 50%;    transform: translateY(-50%); cursor: ew-resize; }
+    .ed-handle.e  { right: -8px;  top: 50%;    transform: translateY(-50%); cursor: ew-resize; }
+    .ed-handle.nw { top: -8px;    left: -8px;     cursor: nwse-resize; }
+    .ed-handle.ne { top: -8px;    right: -8px;    cursor: nesw-resize; }
+    .ed-handle.sw { bottom: -8px; left: -8px;     cursor: nesw-resize; }
+    .ed-handle.se { bottom: -8px; right: -8px;    cursor: nwse-resize; }
+    /* Aspect ratio chip row */
+    .ed-ratios {
+      display: flex; gap: 6px;
+      overflow-x: auto;
+      padding: 4px 2px;
+      margin-bottom: 10px;
+      scrollbar-width: thin;
+    }
+    .ed-ratio {
+      flex: 0 0 auto;
+      padding: 6px 12px; border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--clr-border-2);
+      color: var(--clr-text-muted);
+      font-weight: 600; font-family: inherit; cursor: pointer;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+    .ed-ratio:hover { color: var(--clr-text); }
+    .ed-ratio.active {
+      background: var(--clr-primary);
+      border-color: var(--clr-primary);
+      color: #fff;
+    }
+    /* Tool button row */
+    .editor-tools {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .editor-tool {
+      flex: 1; min-width: 68px;
+      padding: 8px 10px; border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--clr-border-2);
+      color: var(--clr-text);
+      font-weight: 600; font-family: inherit; cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .editor-tool:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--clr-primary-2);
+    }
+    .editor-tool.active {
+      background: rgba(139,47,201,0.2);
+      border-color: var(--clr-primary-2);
+    }
+    .nav-bar {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: rgba(7,7,16,0.85); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--clr-border-2);
+      padding: 14px 24px; z-index: 50;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .nav-bar .nav-logo { font-size: 1.2rem; }
+
+    /* ===== Right-side admin navbar ===== */
+    .side-nav {
+      position: fixed;
+      top: 80px; right: 20px; bottom: 20px;
+      width: 240px;
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border-2);
+      border-radius: 16px;
+      padding: 18px 14px;
+      z-index: 40;
+      overflow-y: auto;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    .side-nav .sn-section {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .side-nav .sn-title {
+      font-size: 0.7rem; font-weight: 800;
+      color: var(--clr-text-muted);
+      text-transform: uppercase; letter-spacing: 2px;
+      padding: 0 6px 4px;
+    }
+    .side-nav .sn-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 10px;
+      color: var(--clr-text); text-decoration: none;
+      font-size: 0.88rem; font-weight: 600;
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.15s;
+      text-align: left;
+    }
+    .side-nav .sn-link:hover {
+      background: rgba(139,47,201,0.12);
+      border-color: var(--clr-border-2);
+    }
+    .side-nav .sn-link.active {
+      background: rgba(139,47,201,0.18);
+      border-color: var(--clr-primary-2);
+      color: #fff;
+    }
+    .side-nav .sn-link.danger { color: #ff6b9d; }
+    .side-nav .sn-link.danger:hover {
+      background: rgba(255,107,157,0.08);
+      border-color: rgba(255,107,157,0.35);
+    }
+    .side-nav .sn-stat {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 12px; border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--clr-border-2);
+    }
+    .side-nav .sn-stat .sn-label {
+      font-size: 0.78rem; color: var(--clr-text-muted);
+    }
+    .side-nav .sn-stat .sn-value {
+      font-size: 1.1rem; font-weight: 900; color: var(--clr-text);
+    }
+
+    /* Give the main content room for the sidebar on wide screens */
+    @media (min-width: 1100px) {
+      .admin-wrap { max-width: none; margin: 0; padding: 120px 280px 60px 32px; }
+    }
+    @media (max-width: 1099px) {
+      .side-nav {
+        position: static; width: auto; margin: 90px 16px 0;
+        top: auto; right: auto; bottom: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== GATE (password login) ===== -->
+<div id="gate" class="gate" style="display:none;">
+  <div class="gate-card">
+    <a href="../index.html" class="nav-logo" style="display:inline-block;margin-bottom:16px;">
+      <span class="logo-c">C</span>ineVerse
+    </a>
+    <h1>Admin Access</h1>
+    <p>Enter admin password to manage videos</p>
+    <form id="gate-form">
+      <div class="field">
+        <input type="password" id="gate-pw" placeholder="Password" autocomplete="off" />
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;">Unlock</button>
+      <div id="gate-msg" class="msg"></div>
+    </form>
+    <p class="hint" style="margin-top:16px;">Default password: <code>admin123</code></p>
+  </div>
+</div>
+
+<!-- ===== ADMIN PANEL ===== -->
+<div id="admin" style="display:none;">
+  <div class="nav-bar">
+    <a href="../index.html" class="nav-logo"><span class="logo-c">C</span>ineVerse <small style="color:var(--clr-text-muted);font-weight:500;">Admin</small></a>
+    <div style="display:flex;gap:10px;">
+      <a href="../index.html" class="btn-outline" style="padding:8px 16px;font-size:0.82rem;">← View Site</a>
+      <button id="btn-logout" class="btn-nav btn-sign-in">Logout</button>
+    </div>
+  </div>
+
+  <!-- ===== RIGHT SIDEBAR ===== -->
+  <aside class="side-nav" aria-label="Admin navigation">
+    <div class="sn-section">
+      <div class="sn-title">Overview</div>
+      <div class="sn-stat">
+        <span class="sn-label">Videos</span>
+        <span class="sn-value" id="sn-videos">0</span>
+      </div>
+      <div class="sn-stat">
+        <span class="sn-label">Users</span>
+        <span class="sn-value" id="sn-users">0</span>
+      </div>
+    </div>
+
+    <div class="sn-section">
+      <div class="sn-title">Sections</div>
+      <button type="button" class="sn-link" data-jump="panel-dash">📊 Engagement Dashboard</button>
+      <button type="button" class="sn-link" data-jump="panel-upload">📤 Upload Video</button>
+      <button type="button" class="sn-link" data-jump="panel-videos">🎬 Published Videos</button>
+      <button type="button" class="sn-link" data-jump="panel-users">👥 Registered Users</button>
+    </div>
+
+    <div class="sn-section" style="margin-top:auto;">
+      <div class="sn-title">Actions</div>
+      <a class="sn-link" href="../index.html">🏠 View Site</a>
+      <a class="sn-link" href="dashboard.html">📊 User Dashboard</a>
+      <button type="button" class="sn-link danger" id="sn-logout">⎋ Logout</button>
+    </div>
+  </aside>
+
+  <div class="admin-wrap">
+    <div class="admin-header">
+      <div>
+        <h1>Video Management</h1>
+        <p style="color:var(--clr-text-muted);font-size:0.9rem;">Upload and manage content shown to users across the site.</p>
+      </div>
+    </div>
+
+    <!-- ENGAGEMENT DASHBOARD -->
+    <div class="panel" id="panel-dash" style="margin-bottom:28px;">
+      <h2>📊 Engagement Dashboard</h2>
+      <div class="dash-kpis" id="dash-kpis"></div>
+      <div class="dash-sub">
+        <div class="dash-list">
+          <h3>Top-rated videos</h3>
+          <div id="dash-top-rated"></div>
+        </div>
+        <div class="dash-list">
+          <h3>Most discussed</h3>
+          <div id="dash-top-commented"></div>
+        </div>
+      </div>
+      <div class="dash-list" style="margin-top:18px;">
+        <h3>Recent comments</h3>
+        <div id="dash-recent-comments"></div>
+      </div>
+    </div>
+
+    <div class="admin-grid">
+      <!-- UPLOAD FORM -->
+      <div class="panel" id="panel-upload">
+        <h2 id="upload-heading">📤 Upload New Video</h2>
+        <div id="edit-banner" class="edit-banner" style="display:none;">
+          ✏️ Editing <b id="edit-title">—</b> · video file/URL is optional — leave blank to keep the current source.
+        </div>
+        <form id="upload-form">
+          <div class="field">
+            <label>Title *</label>
+            <input type="text" id="f-title" required placeholder="e.g. Starfall Chronicles" />
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Category *</label>
+              <select id="f-category" required>
+                <option value="Movies">Movies</option>
+                <option value="Series">Series</option>
+                <option value="Originals">Originals</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Genre *</label>
+              <select id="f-genre" required>
+                <option>Action</option><option>Drama</option><option>Sci-Fi</option>
+                <option>Horror</option><option>Romance</option><option>Comedy</option>
+                <option>Thriller</option><option>Animation</option><option>Fantasy</option>
+                <option>Mystery</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Year</label>
+            <input type="number" id="f-year" value="2026" min="1950" max="2099" />
+          </div>
+          <div class="field" style="background:rgba(139,47,201,0.08);border:1px dashed rgba(196,77,255,0.35);padding:10px 12px;border-radius:10px;">
+            <div style="font-size:0.82rem;color:#c44dff;font-weight:700;">★ Rating comes from your viewers</div>
+            <div style="font-size:0.78rem;color:var(--clr-text-muted);margin-top:3px;">
+              Users rate the video after they watch it — no fake ratings here.
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Description</label>
+            <textarea id="f-desc" placeholder="Short synopsis for users…"></textarea>
+          </div>
+
+          <div class="field">
+            <label>Badge <span style="color:var(--clr-text-muted);font-weight:400;">(optional)</span></label>
+            <select id="f-badge">
+              <option value="">None</option>
+              <option>NEW</option><option>HOT</option><option>TOP 10</option>
+              <option>S1</option><option>S2</option><option>EXCLUSIVE</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Thumbnail Image <span style="color:var(--clr-text-muted);font-weight:400;">(optional)</span></label>
+            <div class="upload-tabs">
+              <button type="button" class="thumb-tab active" data-thumb="file">📁 Upload</button>
+              <button type="button" class="thumb-tab" data-thumb="url">🔗 URL</button>
+              <button type="button" class="thumb-tab" data-thumb="none">🎨 Color only</button>
+            </div>
+            <div id="thumb-file-tab">
+              <label class="drop-zone" id="thumb-drop" style="padding:14px;">
+                <div class="dz-icon" style="font-size:1.3rem;">🖼️</div>
+                <div class="dz-title" style="font-size:0.86rem;">Pick an image (JPG, PNG, WebP)</div>
+                <div class="dz-sub">Auto-resized to 600×900. Kept under ~150 KB.</div>
+                <input type="file" id="f-thumb-file" accept="image/*" />
+              </label>
+            </div>
+            <div id="thumb-url-tab" style="display:none;">
+              <input type="url" id="f-thumb-url" placeholder="https://example.com/poster.jpg" />
+            </div>
+            <div id="thumb-preview" class="thumb-preview" style="display:none;">
+              <img id="thumb-preview-img" alt="thumbnail preview" />
+              <button type="button" class="fi-remove" id="thumb-remove" title="Remove image">✕</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Fallback Color <span style="color:var(--clr-text-muted);font-weight:400;">(when no image is set)</span></label>
+            <input type="color" id="f-color" value="#8b2fc9" style="height:44px;cursor:pointer;" />
+          </div>
+
+          <div class="field">
+            <label>Video Source *</label>
+            <div class="upload-tabs">
+              <button type="button" class="tab-btn active" data-tab="file">📁 Upload File</button>
+              <button type="button" class="tab-btn" data-tab="url">🔗 Paste URL</button>
+            </div>
+            <div id="tab-file">
+              <label class="drop-zone" id="drop-zone">
+                <div class="dz-icon">🎬</div>
+                <div class="dz-title">Click to choose or drop a video here</div>
+                <div class="dz-sub">MP4, WebM, MOV · up to 200 GB (limited by your browser's free disk quota)</div>
+                <input type="file" id="f-file" accept="video/*" />
+              </label>
+              <div id="file-info" class="file-info">
+                <div class="fi-head">
+                  <span class="fi-name" id="fi-name">—</span>
+                  <span class="fi-size" id="fi-size"></span>
+                  <button type="button" class="fi-remove" id="fi-remove" title="Remove file">✕</button>
+                </div>
+                <div class="fi-msg" id="fi-msg"></div>
+              </div>
+              <div id="progress-wrap" class="progress-wrap">
+                <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                <div class="progress-label">
+                  <span id="progress-text">Reading file…</span>
+                  <span id="progress-pct">0%</span>
+                </div>
+              </div>
+              <p class="hint" id="quota-hint">Stored locally in IndexedDB. Quota depends on your free disk space.</p>
+            </div>
+            <div id="tab-url" style="display:none;">
+              <input type="url" id="f-url"
+                     placeholder="YouTube, Google Drive share link, Dropbox, Vimeo, or direct .mp4 URL" />
+              <div id="url-preview" class="file-info" style="margin-top:10px;">
+                <div class="fi-head">
+                  <span class="fi-name" id="up-name">—</span>
+                  <span class="fi-size" id="up-type"></span>
+                </div>
+                <div class="fi-msg" id="up-msg"></div>
+              </div>
+              <p class="hint">
+                Supports: YouTube, Google Drive (share link), Dropbox, OneDrive, Vimeo, or any direct video URL.
+                <b>This is the only way to post videos above ~1 GB.</b>
+              </p>
+            </div>
+            <details class="host-help">
+              <summary>📘 How to post huge videos (10 GB +)</summary>
+              <ol>
+                <li><b>Google Drive</b> (free, up to 15 GB):
+                  upload the file to Drive → right-click → <i>Share</i> → <i>Anyone with the link</i> →
+                  copy the link and paste into the URL tab.</li>
+                <li><b>YouTube</b> (free, unlimited): upload as <i>Unlisted</i>, copy any YouTube URL
+                  (watch / share / embed) — it'll auto-convert.</li>
+                <li><b>Cloudflare R2 / Bunny.net / Backblaze B2</b> — cheap object storage.
+                  Get the direct <code>.mp4</code> URL and paste it.</li>
+                <li><b>Internet Archive</b> (archive.org) — free permanent hosting for public content.</li>
+              </ol>
+              <p class="host-help-note">
+                ⚠ Browser-based uploads can <b>never</b> hold 10 GB — localStorage is 5 MB,
+                IndexedDB is ~1 GB on most browsers. External hosting is the only real option.
+              </p>
+            </details>
+          </div>
+
+          <button type="submit" class="btn-primary" id="submit-btn" style="width:100%;">
+            <span id="submit-label">Publish Video</span>
+          </button>
+          <button type="button" id="cancel-edit-btn" class="btn-cancel-edit" style="display:none;">
+            Cancel edit
+          </button>
+          <div id="upload-msg" class="msg"></div>
+        </form>
+      </div>
+
+      <!-- VIDEO LIST -->
+      <div class="panel" id="panel-videos">
+        <h2>🎬 Published Videos (<span id="count">0</span>)</h2>
+        <div id="videos-list" class="videos-list"></div>
+      </div>
+
+      <!-- USER LIST -->
+      <div class="panel" id="panel-users" style="grid-column: 1 / -1;">
+        <h2>👥 Registered Users (<span id="users-count">0</span>)</h2>
+        <div id="users-list" class="users-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .users-list { display:flex; flex-direction:column; gap:10px; }
+  .user-row {
+    display:flex; align-items:center; gap:14px;
+    padding:12px 14px; border:1px solid var(--clr-border-2);
+    border-radius:12px; background:rgba(255,255,255,0.02);
+  }
+  .user-row .u-avatar {
+    width:44px; height:44px; border-radius:50%;
+    background:var(--grad-primary);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:900; color:#fff; flex-shrink:0;
+  }
+  .user-row .u-info { flex:1; min-width:0; }
+  .user-row .u-name { font-weight:700; color:var(--clr-text); }
+  .user-row .u-meta { font-size:0.82rem; color:var(--clr-text-muted); margin-top:2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .user-row .u-plan {
+    padding:3px 10px; border-radius:99px;
+    background:rgba(245,197,24,0.12); color:#f5c518;
+    font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+  }
+  .user-row .u-del {
+    padding:7px 12px; border-radius:8px;
+    background:transparent; color:#ff6b9d;
+    border:1px solid rgba(255,107,157,0.3);
+    cursor:pointer; font-size:0.8rem; font-weight:600;
+  }
+  .user-row .u-del:hover { background:rgba(255,107,157,0.1); border-color:#ff6b9d; }
+
+  /* Promote toggle on each video row */
+  .btn-promote {
+    padding: 7px 14px; border-radius: 99px;
+    font-size: 0.78rem; font-weight: 700;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--clr-border-2);
+    color: var(--clr-text-muted);
+    cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+    margin-right: 6px;
+  }
+  .btn-promote:hover { border-color: #f5c518; color: #f5c518; }
+  .btn-promote.on {
+    background: linear-gradient(135deg, #f5c518, #ff9f1c);
+    border-color: transparent; color: #0a0612;
+    box-shadow: 0 4px 14px rgba(245,197,24,0.3);
+  }
+  .promoted-pill {
+    display: inline-block; padding: 2px 9px; border-radius: 99px;
+    background: rgba(245,197,24,0.15); color: #f5c518;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-left: 6px;
+  }
+
+  /* Dashboard panel */
+  .dash-kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+  }
+  .dash-kpi {
+    padding: 14px 16px; border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--clr-border-2);
+  }
+  .dash-kpi .k-label {
+    font-size: 0.7rem; color: var(--clr-text-muted);
+    text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700;
+  }
+  .dash-kpi .k-val { font-size: 1.6rem; font-weight: 900; margin-top: 4px; }
+  .dash-kpi .k-sub { font-size: 0.75rem; color: var(--clr-text-muted); margin-top: 2px; }
+
+  .dash-sub { display: grid; gap: 18px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 720px) { .dash-sub { grid-template-columns: 1fr; } }
+  .dash-list {
+    border: 1px solid var(--clr-border-2); border-radius: 12px;
+    background: rgba(255,255,255,0.02); overflow: hidden;
+  }
+  .dash-list h3 {
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--clr-text-muted);
+    padding: 12px 14px; border-bottom: 1px solid var(--clr-border-2);
+  }
+  .dash-list .dl-row {
+    display: flex; gap: 10px; padding: 10px 14px;
+    border-bottom: 1px solid var(--clr-border-2);
+    align-items: center; font-size: 0.85rem;
+  }
+  .dash-list .dl-row:last-child { border-bottom: none; }
+  .dash-list .dl-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dash-list .dl-meta { color: var(--clr-text-muted); font-size: 0.78rem; }
+  .dash-list .dl-empty { padding: 20px 14px; color: var(--clr-text-muted); font-size: 0.85rem; text-align: center; }
+  .dash-comment {
+    padding: 10px 14px; border-bottom: 1px solid var(--clr-border-2);
+    font-size: 0.85rem;
+  }
+  .dash-comment:last-child { border-bottom: none; }
+  .dash-comment .dc-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.78rem; color: var(--clr-text-muted); margin-bottom: 4px;
+  }
+  .dash-comment .dc-user { color: var(--clr-text); font-weight: 700; }
+  .dash-comment .dc-text { color: var(--clr-text); line-height: 1.4; }
+  .dash-comment .dc-del {
+    background: none; border: none; color: #ff6b9d; cursor: pointer;
+    font-size: 0.75rem; padding: 0 4px;
+  }
+  .dash-comment .dc-del:hover { text-decoration: underline; }
+  .users-empty {
+    text-align:center; padding:40px 20px; color:var(--clr-text-muted);
+    border:1px dashed var(--clr-border-2); border-radius:12px;
+  }
+</style>
+
+<!-- ===== CUSTOM CONFIRM MODAL ===== -->
+<div id="cine-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="cm-title">
+    <div class="modal-icon" id="cm-icon">⚠</div>
+    <h3 class="modal-title" id="cm-title">Are you sure?</h3>
+    <div class="modal-body" id="cm-body">This action cannot be undone.</div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn cancel" id="cm-cancel">Cancel</button>
+      <button type="button" class="modal-btn confirm" id="cm-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== IMAGE EDITOR MODAL ===== -->
+<div id="img-editor" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-card editor-card" role="dialog" aria-modal="true" aria-labelledby="ed-title">
+    <h3 class="modal-title" id="ed-title">✂ Crop &amp; Adjust</h3>
+    <div class="modal-body">
+      Drag the crop box or its corners. Pick an aspect ratio below.
+    </div>
+    <div class="editor-scroll">
+      <div class="ed-stage" id="ed-stage">
+        <img id="ed-img" alt="source" />
+        <div class="ed-crop" id="ed-crop">
+          <span class="ed-handle nw" data-h="nw"></span>
+          <span class="ed-handle n"  data-h="n"></span>
+          <span class="ed-handle ne" data-h="ne"></span>
+          <span class="ed-handle e"  data-h="e"></span>
+          <span class="ed-handle se" data-h="se"></span>
+          <span class="ed-handle s"  data-h="s"></span>
+          <span class="ed-handle sw" data-h="sw"></span>
+          <span class="ed-handle w"  data-h="w"></span>
+        </div>
+      </div>
+      <div class="ed-ratios" id="ed-ratios">
+        <button type="button" class="ed-ratio active" data-r="free">Free ★</button>
+        <button type="button" class="ed-ratio" data-r="1:1">1:1</button>
+        <button type="button" class="ed-ratio" data-r="16:9">16:9</button>
+        <button type="button" class="ed-ratio" data-r="4:3">4:3</button>
+        <button type="button" class="ed-ratio" data-r="3:2">3:2</button>
+        <button type="button" class="ed-ratio" data-r="2:3">2:3</button>
+        <button type="button" class="ed-ratio" data-r="3:4">3:4</button>
+        <button type="button" class="ed-ratio" data-r="9:16">9:16</button>
+      </div>
+      <div class="editor-tools">
+        <button type="button" class="editor-tool" id="ed-rot-left"  title="Rotate left 90°">↺</button>
+        <button type="button" class="editor-tool" id="ed-rot-right" title="Rotate right 90°">↻</button>
+        <button type="button" class="editor-tool" id="ed-flip"      title="Flip horizontal">⇄ Flip</button>
+        <button type="button" class="editor-tool" id="ed-fit"       title="Fit crop to image">⤢ Fit</button>
+        <button type="button" class="editor-tool" id="ed-reset"     title="Reset all">Reset</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--clr-border-2);">
+      <button type="button" class="modal-btn cancel" id="ed-cancel">✕ Cancel</button>
+      <button type="button" class="modal-btn confirm" id="ed-apply">✓ Apply</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/store.js"></script>
+<script>
+  // ===== Custom confirm modal =====
+  // Usage: await cineConfirm({ title, body, okLabel, cancelLabel, variant, icon })
+  // variant: 'default' | 'danger' | 'warn'
+  const cmEl     = document.getElementById('cine-modal');
+  const cmIcon   = document.getElementById('cm-icon');
+  const cmTitle  = document.getElementById('cm-title');
+  const cmBody   = document.getElementById('cm-body');
+  const cmOk     = document.getElementById('cm-ok');
+  const cmCancel = document.getElementById('cm-cancel');
+
+  let cmResolver = null;
+  function closeModal(result) {
+    cmEl.classList.remove('show');
+    cmEl.setAttribute('aria-hidden', 'true');
+    const r = cmResolver; cmResolver = null;
+    if (r) r(result);
+  }
+  cmOk.addEventListener('click', () => closeModal(true));
+  cmCancel.addEventListener('click', () => closeModal(false));
+  cmEl.addEventListener('click', (e) => { if (e.target === cmEl) closeModal(false); });
+  document.addEventListener('keydown', (e) => {
+    if (!cmEl.classList.contains('show')) return;
+    if (e.key === 'Escape') closeModal(false);
+    else if (e.key === 'Enter') closeModal(true);
+  });
+
+  function cineConfirm(opts) {
+    const o = opts || {};
+    cmTitle.textContent = o.title || 'Are you sure?';
+    cmBody.innerHTML    = o.body  || '';
+    cmOk.textContent    = o.okLabel || 'Confirm';
+    cmCancel.textContent = o.cancelLabel || 'Cancel';
+    const v = o.variant || 'default';
+    cmIcon.className = 'modal-icon' + (v !== 'default' ? ' ' + v : '');
+    cmOk.className   = 'modal-btn confirm' + (v !== 'default' ? ' ' + v : '');
+    cmIcon.textContent = o.icon || (v === 'danger' ? '🗑' : v === 'warn' ? '⚠' : '❓');
+    cmEl.classList.add('show');
+    cmEl.setAttribute('aria-hidden', 'false');
+    setTimeout(() => cmOk.focus(), 50);
+    return new Promise(resolve => { cmResolver = resolve; });
+  }
+
+  const gate  = document.getElementById('gate');
+  const admin = document.getElementById('admin');
+
+  function showAdmin() {
+    gate.style.display = 'none';
+    admin.style.display = 'block';
+    (async () => {
+      try {
+        const res = await CineStore.migrateIdsToSlugs();
+        if (res && res.migrated) {
+          console.log('[CineVerse] URL migration:', res.migrated, 'videos rekeyed.');
+        }
+      } catch (err) { console.warn('URL migration failed:', err); }
+      renderList();
+    })();
+    initSideNav();
+  }
+
+  let sideNavReady = false;
+  function initSideNav() {
+    if (sideNavReady) return;
+    sideNavReady = true;
+    document.querySelectorAll('.side-nav .sn-link[data-jump]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const el = document.getElementById(btn.dataset.jump);
+        if (!el) return;
+        document.querySelectorAll('.side-nav .sn-link[data-jump]')
+          .forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+    const out = document.getElementById('sn-logout');
+    if (out) out.addEventListener('click', () => {
+      CineStore.logout();
+      showGate();
+    });
+  }
+
+  function updateSideNavStats() {
+    const v = document.getElementById('sn-videos');
+    const u = document.getElementById('sn-users');
+    if (v) v.textContent = CineStore.getAll().length;
+    if (u) u.textContent = CineStore.userCount();
+  }
+  function showGate() {
+    gate.style.display = 'flex';
+    admin.style.display = 'none';
+  }
+
+  if (CineStore.isAdmin()) showAdmin(); else showGate();
+
+  // ---- Login ----
+  document.getElementById('gate-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pw = document.getElementById('gate-pw').value;
+    const msg = document.getElementById('gate-msg');
+    if (CineStore.login(pw)) {
+      msg.textContent = '✓ Access granted';
+      msg.className = 'msg ok';
+      setTimeout(showAdmin, 400);
+    } else {
+      msg.textContent = '✗ Incorrect password';
+      msg.className = 'msg err';
+    }
+  });
+
+  // ---- Logout ----
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    CineStore.logout();
+    showGate();
+  });
+
+  // ---- Tab toggle ----
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.getElementById('tab-file').style.display = tab === 'file' ? 'block' : 'none';
+      document.getElementById('tab-url').style.display  = tab === 'url'  ? 'block' : 'none';
+    });
+  });
+
+  // ---- Helpers ----
+  // Files go into IndexedDB. Real-world per-blob limits in the browser are ~2–4 GB;
+  // beyond that, use the "Paste URL" tab to host externally.
+  const GB = 1024 * 1024 * 1024;
+  const MAX_SAFE =   2 * GB;  //  2 GB: practical single-file upload
+  const MAX_HARD = 200 * GB;  // 200 GB: code cap (actual storage is limited by browser quota)
+
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+    if (bytes < 1024*1024*1024) return (bytes/1024/1024).toFixed(1) + ' MB';
+    return (bytes/1024/1024/1024).toFixed(2) + ' GB';
+  }
+
+  function initials(str) {
+    return str.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  // Show IndexedDB quota info so the user knows the real limit.
+  let browserFree = 0;
+  (async () => {
+    const q = await CineStore.quota();
+    if (!q) return;
+    browserFree = q.quota - q.usage;
+    const hint = document.getElementById('quota-hint');
+    hint.innerHTML = 'Stored in IndexedDB · ~' + fmtSize(browserFree) + ' free of ' +
+                     fmtSize(q.quota) + ' total.';
+  })();
+
+  // ---- File selection UI ----
+  const fileInput  = document.getElementById('f-file');
+  const dropZone   = document.getElementById('drop-zone');
+  const fileInfo   = document.getElementById('file-info');
+  const fiName     = document.getElementById('fi-name');
+  const fiSize     = document.getElementById('fi-size');
+  const fiMsg      = document.getElementById('fi-msg');
+  const fiRemove   = document.getElementById('fi-remove');
+  const progWrap   = document.getElementById('progress-wrap');
+  const progFill   = document.getElementById('progress-fill');
+  const progPct    = document.getElementById('progress-pct');
+  const progText   = document.getElementById('progress-text');
+
+  function showFileInfo(file) {
+    fileInfo.classList.add('show');
+    fileInfo.classList.remove('ok','warn','error');
+    fiName.textContent = file.name;
+    fiSize.textContent = fmtSize(file.size);
+
+    if (file.size > MAX_HARD) {
+      fileInfo.classList.add('error');
+      fiMsg.innerHTML = '⚠ File is too large for browser storage (' + fmtSize(file.size) +
+        ' > ' + fmtSize(MAX_HARD) + '). Switch to the <b>Paste URL</b> tab and host the file elsewhere.';
+    } else if (browserFree > 0 && file.size > browserFree * 0.9) {
+      fileInfo.classList.add('error');
+      fiMsg.innerHTML = '⚠ Not enough browser storage (' + fmtSize(file.size) +
+        ' needed, ~' + fmtSize(browserFree) + ' free). Free up disk space or use the <b>Paste URL</b> tab.';
+    } else if (file.size > MAX_SAFE) {
+      fileInfo.classList.add('warn');
+      fiMsg.innerHTML = '⚠ Larger than recommended (' + fmtSize(file.size) +
+        '). Browser may fail on single blobs over ~2 GB — <b>Paste URL</b> tab is safer for big files.';
+    } else {
+      fileInfo.classList.add('ok');
+      fiMsg.textContent = '✓ Ready to publish.';
+    }
+  }
+
+  function clearFileInfo() {
+    fileInput.value = '';
+    fileInfo.classList.remove('show','ok','warn','error');
+    fiMsg.textContent = '';
+    progWrap.classList.remove('show');
+    progFill.style.width = '0%';
+    progPct.textContent = '0%';
+  }
+
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files[0];
+    if (f) showFileInfo(f); else clearFileInfo();
+  });
+
+  fiRemove.addEventListener('click', clearFileInfo);
+
+  // Drag & drop
+  ['dragenter','dragover'].forEach(ev => {
+    dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(ev => {
+    dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.remove('drag'); });
+  });
+  dropZone.addEventListener('drop', (e) => {
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
+    if (!/^video\//.test(f.type)) {
+      fileInfo.classList.add('show','error');
+      fiName.textContent = f.name;
+      fiSize.textContent = fmtSize(f.size);
+      fiMsg.textContent = '✗ Not a video file.';
+      return;
+    }
+    const dt = new DataTransfer();
+    dt.items.add(f);
+    fileInput.files = dt.files;
+    showFileInfo(f);
+  });
+
+  function setProgress(p, text) {
+    progWrap.classList.add('show');
+    const pct = Math.round(p * 100);
+    progFill.style.width = pct + '%';
+    progPct.textContent = pct + '%';
+    if (text) progText.textContent = text;
+  }
+
+  // ---- Thumbnail picker ----
+  const thumbFileInput = document.getElementById('f-thumb-file');
+  const thumbUrlInput  = document.getElementById('f-thumb-url');
+  const thumbFileTab   = document.getElementById('thumb-file-tab');
+  const thumbUrlTab    = document.getElementById('thumb-url-tab');
+  const thumbDrop      = document.getElementById('thumb-drop');
+  const thumbPreview   = document.getElementById('thumb-preview');
+  const thumbPreviewImg = document.getElementById('thumb-preview-img');
+  const thumbRemoveBtn = document.getElementById('thumb-remove');
+  let thumbDataUrl = '';
+  let thumbMode = 'file';
+
+  function setThumbPreview(url) {
+    thumbDataUrl = url || '';
+    if (url) {
+      thumbPreviewImg.src = url;
+      thumbPreview.style.display = 'block';
+    } else {
+      thumbPreviewImg.removeAttribute('src');
+      thumbPreview.style.display = 'none';
+    }
+  }
+
+  document.querySelectorAll('.thumb-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.thumb-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      thumbMode = btn.dataset.thumb;
+      thumbFileTab.style.display = thumbMode === 'file' ? 'block' : 'none';
+      thumbUrlTab.style.display  = thumbMode === 'url'  ? 'block' : 'none';
+      if (thumbMode === 'none') setThumbPreview('');
+    });
+  });
+
+  // Load a file as a data URL (keeps full res for the editor).
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error('read_failed'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ===== Image editor (crop-box style) =====
+  // Draggable crop rectangle on top of a letterboxed image.
+  // Supports aspect presets (or free), rotate 90°, horizontal flip, and per-handle resize.
+  const edEl       = document.getElementById('img-editor');
+  const edImg      = document.getElementById('ed-img');
+  const edStage    = document.getElementById('ed-stage');
+  const edCrop     = document.getElementById('ed-crop');
+  const edRatios   = document.getElementById('ed-ratios');
+  const edApplyBtn = document.getElementById('ed-apply');
+  const edCancel   = document.getElementById('ed-cancel');
+  const edReset    = document.getElementById('ed-reset');
+  const edFit      = document.getElementById('ed-fit');
+  const edFlip     = document.getElementById('ed-flip');
+  const edRotLeft  = document.getElementById('ed-rot-left');
+  const edRotRight = document.getElementById('ed-rot-right');
+
+  // ed-state lives in STAGE pixel coords for display, and maps to image source coords on Apply.
+  const edState = {
+    img: null,             // HTMLImageElement
+    rotation: 0,           // 0 | 90 | 180 | 270 — applied to the image before placement
+    flip: 1,               // 1 | -1 horizontal flip (applied before rotation)
+    stage: { w: 0, h: 0 }, // stage pixel size
+    imgRect: { x: 0, y: 0, w: 0, h: 0 }, // placement of the image within the stage (contain-fit)
+    rotatedSize: { w: 0, h: 0 },         // natural size after rotation
+    crop: { x: 0, y: 0, w: 0, h: 0 },    // crop box in STAGE coords
+    ratio: null,           // target aspect (w/h); null = free (covers full image)
+    resolver: null,
+  };
+
+  const MIN_CROP = 30;  // min crop box size in stage px
+
+  // ---- Layout: fit image into stage ("contain") ----
+  function layoutStage() {
+    const s = edState.stage = { w: edStage.clientWidth, h: edStage.clientHeight };
+    const r = edState.rotation;
+    const iw = edState.img.naturalWidth, ih = edState.img.naturalHeight;
+
+    const rotated90 = (r === 90 || r === 270);
+    const rw = rotated90 ? ih : iw;
+    const rh = rotated90 ? iw : ih;
+    edState.rotatedSize = { w: rw, h: rh };
+
+    // Contain-fit
+    const scale = Math.min(s.w / rw, s.h / rh);
+    const dw = rw * scale, dh = rh * scale;
+    const dx = (s.w - dw) / 2, dy = (s.h - dh) / 2;
+    edState.imgRect = { x: dx, y: dy, w: dw, h: dh };
+
+    // Position the <img> so its center lands at the center of imgRect using pixel math.
+    // Natural size stays iw × ih; we scale via transform to reach dw × dh (rotated appropriately).
+    edImg.style.width  = iw + 'px';
+    edImg.style.height = ih + 'px';
+    edImg.style.left   = (dx + dw / 2 - iw / 2) + 'px';
+    edImg.style.top    = (dy + dh / 2 - ih / 2) + 'px';
+
+    // Scale along the image's *local* axes. When rotated 90/270, image's local width becomes
+    // the display height, and local height becomes the display width.
+    const sx = edState.flip * (rotated90 ? dh / iw : dw / iw);
+    const sy = rotated90 ? dw / ih : dh / ih;
+    edImg.style.transformOrigin = 'center center';
+    edImg.style.transform = `rotate(${r}deg) scale(${sx}, ${sy})`;
+  }
+
+  function clampCrop() {
+    const r = edState.imgRect, c = edState.crop;
+    c.w = Math.max(MIN_CROP, Math.min(c.w, r.w));
+    c.h = Math.max(MIN_CROP, Math.min(c.h, r.h));
+    c.x = Math.max(r.x, Math.min(c.x, r.x + r.w - c.w));
+    c.y = Math.max(r.y, Math.min(c.y, r.y + r.h - c.h));
+  }
+
+  function renderCrop() {
+    clampCrop();
+    const c = edState.crop;
+    edCrop.style.left   = c.x + 'px';
+    edCrop.style.top    = c.y + 'px';
+    edCrop.style.width  = c.w + 'px';
+    edCrop.style.height = c.h + 'px';
+  }
+
+  // Fit crop to image bounds using current ratio (or full image for free).
+  function fitCropToImage() {
+    const r = edState.imgRect;
+    if (edState.ratio) {
+      let cw = r.w, ch = cw / edState.ratio;
+      if (ch > r.h) { ch = r.h; cw = ch * edState.ratio; }
+      edState.crop = { x: r.x + (r.w - cw) / 2, y: r.y + (r.h - ch) / 2, w: cw, h: ch };
+    } else {
+      edState.crop = { x: r.x, y: r.y, w: r.w, h: r.h };
+    }
+    renderCrop();
+  }
+
+  function setRatio(ratioStr) {
+    edRatios.querySelectorAll('.ed-ratio').forEach(b =>
+      b.classList.toggle('active', b.dataset.r === ratioStr));
+    if (ratioStr === 'free') { edState.ratio = null; }
+    else {
+      const [a, b] = ratioStr.split(':').map(Number);
+      edState.ratio = a / b;
+    }
+    fitCropToImage();
+  }
+
+  function resetAll() {
+    edState.rotation = 0;
+    edState.flip = 1;
+    layoutStage();
+    setRatio('free');
+  }
+
+  function openEditor(srcDataUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        edState.img = img;
+        edImg.src = srcDataUrl;
+        edEl.classList.add('show');
+        edEl.setAttribute('aria-hidden', 'false');
+        edState.resolver = resolve;
+        requestAnimationFrame(() => {
+          resetAll();
+        });
+      };
+      img.onerror = () => resolve(null);
+      img.src = srcDataUrl;
+    });
+  }
+
+  function closeEditor(result) {
+    edEl.classList.remove('show');
+    edEl.setAttribute('aria-hidden', 'true');
+    const r = edState.resolver; edState.resolver = null;
+    if (r) r(result);
+  }
+
+  // ---- Pointer interactions ----
+  let drag = null;  // { type: 'move'|'resize', handle, startX, startY, startCrop }
+
+  function stagePoint(e) {
+    const r = edStage.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  // Move the entire crop box by dragging inside it
+  edCrop.addEventListener('pointerdown', (e) => {
+    if (e.target.classList.contains('ed-handle')) return;
+    e.preventDefault();
+    const p = stagePoint(e);
+    drag = { type: 'move', startX: p.x, startY: p.y, start: { ...edState.crop } };
+    edCrop.setPointerCapture(e.pointerId);
+  });
+
+  // Resize by dragging handles
+  edCrop.querySelectorAll('.ed-handle').forEach(h => {
+    h.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      const p = stagePoint(e);
+      drag = {
+        type: 'resize', handle: h.dataset.h,
+        startX: p.x, startY: p.y, start: { ...edState.crop }
+      };
+      h.setPointerCapture(e.pointerId);
+    });
+  });
+
+  document.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const p = stagePoint(e);
+    const dx = p.x - drag.startX, dy = p.y - drag.startY;
+    const r = edState.imgRect;
+
+    if (drag.type === 'move') {
+      edState.crop.x = drag.start.x + dx;
+      edState.crop.y = drag.start.y + dy;
+      renderCrop();
+      return;
+    }
+
+    // Resize
+    const h = drag.handle;
+    let { x, y, w, h: ch } = drag.start;
+    let nx = x, ny = y, nw = w, nh = ch;
+
+    if (h.includes('e')) nw = w + dx;
+    if (h.includes('w')) { nx = x + dx; nw = w - dx; }
+    if (h.includes('s')) nh = ch + dy;
+    if (h.includes('n')) { ny = y + dy; nh = ch - dy; }
+
+    // Enforce aspect ratio if locked
+    if (edState.ratio) {
+      const ratio = edState.ratio;
+      if (h === 'n' || h === 's') {
+        const dw = nh * ratio - nw;
+        nw += dw; nx -= dw / 2;
+      } else if (h === 'e' || h === 'w') {
+        const dh = nw / ratio - nh;
+        nh += dh; ny -= dh / 2;
+      } else {
+        // corners: drive height from width; anchor to opposite corner
+        const anchorX = h.includes('w') ? (x + w) : x;
+        const anchorY = h.includes('n') ? (y + ch) : y;
+        const signX = h.includes('w') ? -1 : 1;
+        const signY = h.includes('n') ? -1 : 1;
+        // use whichever axis produced a larger drag (in ratio units)
+        const byW = Math.abs(nw / ratio);
+        const byH = Math.abs(nh);
+        if (byW > byH) nh = nw / ratio;
+        else           nw = nh * ratio;
+        nw = Math.abs(nw); nh = Math.abs(nh);
+        nx = anchorX + (signX < 0 ? -nw : 0);
+        ny = anchorY + (signY < 0 ? -nh : 0);
+      }
+    }
+
+    // Minimum size
+    if (nw < MIN_CROP) { if (h.includes('w')) nx = x + w - MIN_CROP; nw = MIN_CROP; }
+    if (nh < MIN_CROP) { if (h.includes('n')) ny = y + ch - MIN_CROP; nh = MIN_CROP; }
+
+    // Clamp to image rect
+    if (nx < r.x)               { nw -= r.x - nx; nx = r.x; }
+    if (ny < r.y)               { nh -= r.y - ny; ny = r.y; }
+    if (nx + nw > r.x + r.w)    { nw = r.x + r.w - nx; }
+    if (ny + nh > r.y + r.h)    { nh = r.y + r.h - ny; }
+
+    // Re-enforce ratio after clamping
+    if (edState.ratio) {
+      if (nw / edState.ratio <= nh) nh = nw / edState.ratio;
+      else                           nw = nh * edState.ratio;
+    }
+
+    edState.crop = { x: nx, y: ny, w: nw, h: nh };
+    renderCrop();
+  });
+
+  document.addEventListener('pointerup', () => { drag = null; });
+  document.addEventListener('pointercancel', () => { drag = null; });
+
+  // Ratio chips
+  edRatios.addEventListener('click', (e) => {
+    const b = e.target.closest('.ed-ratio');
+    if (b) setRatio(b.dataset.r);
+  });
+
+  edRotLeft.addEventListener('click', () => {
+    edState.rotation = (edState.rotation + 270) % 360;
+    layoutStage(); fitCropToImage();
+  });
+  edRotRight.addEventListener('click', () => {
+    edState.rotation = (edState.rotation + 90) % 360;
+    layoutStage(); fitCropToImage();
+  });
+  edFlip.addEventListener('click', () => {
+    edState.flip = -edState.flip;
+    layoutStage();
+  });
+  edFit.addEventListener('click', () => fitCropToImage());
+  edReset.addEventListener('click', () => resetAll());
+
+  edCancel.addEventListener('click', () => closeEditor(null));
+  edEl.addEventListener('click', (e) => { if (e.target === edEl) closeEditor(null); });
+
+  // Window resize: re-layout
+  window.addEventListener('resize', () => {
+    if (!edEl.classList.contains('show')) return;
+    layoutStage(); fitCropToImage();
+  });
+
+  // ---- Apply: map stage crop to image source pixels, render to canvas ----
+  edApplyBtn.addEventListener('click', () => {
+    const c = edState.crop, r = edState.imgRect;
+    const rw = edState.rotatedSize.w, rh = edState.rotatedSize.h;
+    // Stage-to-rotated-image scale
+    const s2i = rw / r.w; // since r.w/r.h == rw/rh (contain preserves ratio)
+    // Crop rectangle in rotated-image coords
+    const rx = (c.x - r.x) * s2i;
+    const ry = (c.y - r.y) * s2i;
+    const rcw = c.w * s2i;
+    const rch = c.h * s2i;
+
+    // Output size: longest side 1200, preserve crop aspect
+    const cropAspect = rcw / rch;
+    let outW, outH;
+    if (cropAspect >= 1) { outW = Math.min(1200, Math.round(rcw)); outH = Math.round(outW / cropAspect); }
+    else                  { outH = Math.min(1200, Math.round(rch)); outW = Math.round(outH * cropAspect); }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = outW; canvas.height = outH;
+    const ctx = canvas.getContext('2d');
+
+    // Draw the full rotated+flipped image into a temp offscreen, then crop to (rx,ry,rcw,rch)
+    // Shortcut: apply the same transforms directly while drawing and use drawImage with the crop.
+    // We'll first render the whole rotated image to a temp canvas at its rotated natural size,
+    // then drawImage(src, rx, ry, rcw, rch, 0, 0, outW, outH).
+    const tmp = document.createElement('canvas');
+    tmp.width = rw; tmp.height = rh;
+    const tctx = tmp.getContext('2d');
+    tctx.save();
+    tctx.translate(rw / 2, rh / 2);
+    tctx.rotate(edState.rotation * Math.PI / 180);
+    tctx.scale(edState.flip, 1);
+    tctx.drawImage(edState.img, -edState.img.naturalWidth / 2, -edState.img.naturalHeight / 2);
+    tctx.restore();
+
+    ctx.drawImage(tmp, rx, ry, rcw, rch, 0, 0, outW, outH);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+    closeEditor(dataUrl);
+  });
+
+  // ---- File / URL / drop handlers: launch the editor ----
+  async function launchEditorFromFile(file) {
+    if (!file || !/^image\//.test(file.type)) {
+      await cineConfirm({
+        title: 'Invalid image',
+        body: 'Please pick a JPG, PNG, or WebP file.',
+        variant: 'warn', okLabel: 'OK', cancelLabel: 'Close'
+      });
+      return;
+    }
+    const raw = await fileToDataUrl(file);
+    const result = await openEditor(raw);
+    if (result) setThumbPreview(result);
+  }
+
+  thumbFileInput.addEventListener('change', () => {
+    const f = thumbFileInput.files[0];
+    if (f) launchEditorFromFile(f);
+  });
+
+  ['dragenter','dragover'].forEach(ev =>
+    thumbDrop.addEventListener(ev, e => { e.preventDefault(); thumbDrop.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev =>
+    thumbDrop.addEventListener(ev, e => { e.preventDefault(); thumbDrop.classList.remove('drag'); }));
+  thumbDrop.addEventListener('drop', (e) => {
+    const f = e.dataTransfer.files[0];
+    if (f) launchEditorFromFile(f);
+  });
+
+  // URL mode: load the image, then launch the editor.
+  let urlDebounce = null;
+  thumbUrlInput.addEventListener('input', () => {
+    const v = thumbUrlInput.value.trim();
+    clearTimeout(urlDebounce);
+    if (!v) { setThumbPreview(''); return; }
+    // Don't auto-open the editor on every keystroke — wait, then preview.
+    setThumbPreview(v);
+  });
+  // Explicit "Adjust" button for URL mode — reuse thumb-remove row? Simpler: double-click preview.
+  thumbPreviewImg.addEventListener('dblclick', async () => {
+    if (!thumbDataUrl) return;
+    // Fetch into canvas via Image() so we can re-export.
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('load')); img.src = thumbDataUrl; });
+      // Convert to data URL if it's not already, so the editor can render it.
+      let src = thumbDataUrl;
+      if (!src.startsWith('data:')) {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        src = c.toDataURL('image/jpeg', 0.9);
+      }
+      const result = await openEditor(src);
+      if (result) setThumbPreview(result);
+    } catch (err) {
+      await cineConfirm({
+        title: 'Can\'t edit this image',
+        body: 'Remote images can only be edited if the host allows cross-origin use. Download the image and upload it instead.',
+        variant: 'warn', okLabel: 'OK', cancelLabel: 'Close'
+      });
+    }
+  });
+  thumbPreviewImg.title = 'Double-click to re-edit';
+
+  thumbRemoveBtn.addEventListener('click', () => {
+    setThumbPreview('');
+    thumbFileInput.value = '';
+    thumbUrlInput.value = '';
+  });
+
+  // ---- URL tab: live preview of normalization ----
+  const urlInput   = document.getElementById('f-url');
+  const urlPreview = document.getElementById('url-preview');
+  const upName     = document.getElementById('up-name');
+  const upType     = document.getElementById('up-type');
+  const upMsg      = document.getElementById('up-msg');
+
+  const TYPE_LABELS = {
+    youtube: '▶ YouTube',
+    iframe:  '🖼 Embed',
+    url:     '🎞 Direct video'
+  };
+
+  function refreshUrlPreview() {
+    const v = urlInput.value.trim();
+    if (!v) {
+      urlPreview.classList.remove('show','ok','warn','error');
+      return;
+    }
+    const n = CineStore.normalizeUrl(v);
+    urlPreview.classList.add('show','ok');
+    urlPreview.classList.remove('warn','error');
+    upName.textContent = n.src;
+    upType.textContent = TYPE_LABELS[n.type] || 'Link';
+    if (n.src === v) upMsg.textContent = '✓ Ready.';
+    else upMsg.innerHTML = '✓ Detected — will be saved as:<br><code style="font-size:0.74rem;">' +
+                           n.src.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</code>';
+  }
+  urlInput.addEventListener('input', refreshUrlPreview);
+
+  // ---- Upload / Edit ----
+  const submitBtn = document.querySelector('#upload-form .btn-primary');
+  let idleLabel = submitBtn.innerHTML;
+  let editingId = null;
+
+  function slugify(text) {
+    return String(text || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+  }
+
+  function buildUniqueId(title) {
+    const base = slugify(title) || 'video';
+    let candidate = base;
+    let n = 2;
+    while (CineStore.getById(candidate)) {
+      candidate = base + '-' + n++;
+      if (n > 50) { candidate = base + '-' + Date.now().toString(36).slice(-5); break; }
+    }
+    return candidate;
+  }
+
+  function setSubmitLabel(html) {
+    idleLabel = html;
+    if (!submitBtn.disabled) submitBtn.innerHTML = html;
+  }
+
+  function setBusy(busy, label) {
+    submitBtn.disabled = busy;
+    submitBtn.innerHTML = busy
+      ? '<span class="btn-spinner"></span>' + (label || 'Uploading…')
+      : idleLabel;
+  }
+
+  function startEdit(id) {
+    const v = CineStore.getById(id);
+    if (!v) return;
+    editingId = id;
+    document.getElementById('f-title').value    = v.title || '';
+    document.getElementById('f-category').value = v.category || 'Movies';
+    document.getElementById('f-genre').value    = v.genre || 'Action';
+    document.getElementById('f-year').value     = v.year || 2026;
+    document.getElementById('f-desc').value     = v.description || '';
+    document.getElementById('f-badge').value    = v.badge || '';
+    document.getElementById('f-color').value    = v.color || '#8b2fc9';
+    setThumbPreview(v.thumbUrl || '');
+    // Video source is optional in edit mode.
+    document.getElementById('f-file').value = '';
+    document.getElementById('f-url').value  = '';
+    clearFileInfo && clearFileInfo();
+    urlPreview && urlPreview.classList.remove('show');
+    document.getElementById('f-file').required = false;
+    document.getElementById('upload-heading').innerHTML = '✏️ Edit Video';
+    document.getElementById('edit-title').textContent = v.title || '(untitled)';
+    document.getElementById('edit-banner').style.display = '';
+    document.getElementById('cancel-edit-btn').style.display = '';
+    setSubmitLabel('<span>Update Video</span>');
+    document.getElementById('panel-upload').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const msg = document.getElementById('upload-msg');
+    msg.textContent = ''; msg.className = 'msg';
+  }
+
+  function cancelEdit() {
+    editingId = null;
+    document.getElementById('upload-form').reset();
+    document.getElementById('f-color').value = '#8b2fc9';
+    setThumbPreview('');
+    clearFileInfo && clearFileInfo();
+    urlPreview && urlPreview.classList.remove('show');
+    document.getElementById('f-file').required = false; // keep optional; drop-zone doesn't use HTML required anyway
+    document.getElementById('upload-heading').innerHTML = '📤 Upload New Video';
+    document.getElementById('edit-banner').style.display = 'none';
+    document.getElementById('cancel-edit-btn').style.display = 'none';
+    setSubmitLabel('<span>Publish Video</span>');
+    const msg = document.getElementById('upload-msg');
+    msg.textContent = ''; msg.className = 'msg';
+  }
+
+  document.getElementById('cancel-edit-btn').addEventListener('click', cancelEdit);
+
+  // Stream-read a File into IDB by letting the browser store the Blob directly.
+  // We simulate progress with a timer because IndexedDB put() has no progress events,
+  // and the browser's own write is usually fast.
+  async function saveBlobWithProgress(id, file, onProgress) {
+    const total = file.size;
+    let t0 = performance.now();
+    let fakePct = 0;
+    const tick = setInterval(() => {
+      // asymptotic fake progress: approaches 0.9 while we wait
+      fakePct = Math.min(0.9, fakePct + (1 - fakePct) * 0.08);
+      onProgress && onProgress(fakePct);
+    }, 120);
+    try {
+      await CineStore.saveBlob(id, file);
+      clearInterval(tick);
+      onProgress && onProgress(1);
+    } catch (err) {
+      clearInterval(tick);
+      throw err;
+    }
+    return { ms: performance.now() - t0, size: total };
+  }
+
+  document.getElementById('upload-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('upload-msg');
+    msg.textContent = ''; msg.className = 'msg';
+
+    const title    = document.getElementById('f-title').value.trim();
+    const category = document.getElementById('f-category').value;
+    const genre    = document.getElementById('f-genre').value;
+    const year     = parseInt(document.getElementById('f-year').value) || 2026;
+    const rating   = 0; // user-driven — admins can no longer set fake ratings
+    const desc     = document.getElementById('f-desc').value.trim();
+    const badge    = document.getElementById('f-badge').value || null;
+    const color    = document.getElementById('f-color').value;
+
+    const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+    const file = fileInput.files[0];
+    const url  = urlInput.value.trim();
+
+    // In edit mode: if no new source provided, just update the metadata.
+    const isEdit = !!editingId;
+    const noNewSource = isEdit && !file && !url;
+
+    const id = isEdit ? editingId : buildUniqueId(title);
+    let videoSrc, sourceType;
+    let sourceProvided = false;
+
+    if (noNewSource) {
+      // metadata-only update; skip source block entirely
+    } else if (activeTab === 'file') {
+      if (!file) {
+        msg.textContent = '✗ Please select a video file';
+        msg.className = 'msg err'; return;
+      }
+      if (file.size > MAX_HARD) {
+        msg.innerHTML = '✗ File is ' + fmtSize(file.size) + ' — above the <b>1 GB</b> browser limit.<br>' +
+                        'For files this large (or 10 GB+), upload to Google Drive / YouTube / ' +
+                        'Cloudflare R2 and paste the link in the <b>URL</b> tab.';
+        msg.className = 'msg err'; return;
+      }
+      if (file.size > MAX_SAFE) {
+        const proceed = await cineConfirm({
+          title: 'Large file warning',
+          body: 'This file is <b>' + fmtSize(file.size) + '</b> — larger than recommended.<br><br>' +
+                'Saving may take a while or fail if browser storage is full. Continue anyway?',
+          variant: 'warn',
+          okLabel: 'Continue',
+          cancelLabel: 'Cancel'
+        });
+        if (!proceed) return;
+      }
+
+      setBusy(true, 'Saving…');
+      setProgress(0, 'Saving ' + fmtSize(file.size) + '…');
+      try {
+        await saveBlobWithProgress(id, file, (p) => setProgress(p, 'Saving ' + fmtSize(file.size) + '…'));
+        sourceType = 'idb';
+        videoSrc = '';
+        sourceProvided = true;
+      } catch (err) {
+        setBusy(false);
+        progWrap.classList.remove('show');
+        const name = (err && err.name) || '';
+        let hint;
+        if (name === 'QuotaExceededError') {
+          hint = 'Browser storage is full. Delete some videos, or use the URL tab.';
+        } else if (name === 'NotReadableError' || name === 'NotFoundError') {
+          hint = 'The file couldn\'t be read. If it\'s a OneDrive / iCloud file, ' +
+                 'right-click → "Always keep on this device" so it downloads locally, then retry.';
+        } else {
+          hint = 'Unknown error (' + (name || 'read failure') + '). ' +
+                 'Try a smaller file or use the URL tab.';
+        }
+        msg.innerHTML = '✗ <b>Upload failed.</b> ' + hint;
+        msg.className = 'msg err';
+        fileInfo.classList.remove('ok','warn'); fileInfo.classList.add('show','error');
+        fiMsg.textContent = '✗ ' + (name || 'Save error');
+        return;
+      }
+    } else {
+      if (!url) { msg.textContent = '✗ Please paste a URL'; msg.className = 'msg err'; return; }
+      const n = CineStore.normalizeUrl(url);
+      videoSrc = n.src;
+      sourceType = n.type; // 'youtube' | 'iframe' | 'url'
+      sourceProvided = true;
+      setBusy(true, 'Saving…');
+    }
+
+    let saved;
+    if (isEdit) {
+      const patch = {
+        title, category, genre, year, rating, description: desc,
+        badge, color, thumbUrl: thumbDataUrl || ''
+      };
+      if (sourceProvided) {
+        patch.videoSrc = videoSrc;
+        patch.sourceType = sourceType;
+      }
+      saved = CineStore.update(editingId, patch);
+    } else {
+      saved = CineStore.add({
+        id, title, category, genre, year, rating, description: desc,
+        badge, color, videoSrc, sourceType,
+        thumbUrl: thumbDataUrl || ''
+      });
+    }
+
+    setBusy(false);
+    progWrap.classList.remove('show');
+
+    if (saved) {
+      const wasEdit = isEdit;
+      if (wasEdit) {
+        cancelEdit();
+      } else {
+        e.target.reset();
+        document.getElementById('f-color').value = '#8b2fc9';
+        clearFileInfo();
+        urlPreview.classList.remove('show');
+        setThumbPreview('');
+      }
+      msg.textContent = wasEdit ? '✓ Changes saved.' : '✓ Published! Visible to users now.';
+      msg.className = 'msg ok';
+      renderList();
+    } else {
+      // Metadata write failed → the blob orphaned in IDB; clean up.
+      if (!isEdit && sourceType === 'idb') { try { await CineStore.saveBlob(id, null); } catch (_) {} }
+      msg.innerHTML = '✗ <b>Save failed.</b> Browser metadata storage is full. ' +
+                      'Delete some videos or use the <b>Paste URL</b> tab.';
+      msg.className = 'msg err';
+    }
+  });
+
+  // ---- Render list ----
+  function renderList() {
+    const list = CineStore.getAll();
+    document.getElementById('count').textContent = list.length;
+    const wrap = document.getElementById('videos-list');
+
+    if (list.length === 0) {
+      wrap.innerHTML = '<div class="empty">No videos uploaded yet.<br>Use the form to publish your first video.</div>';
+      renderUsers();
+      renderDashboard();
+      updateSideNavStats();
+      return;
+    }
+
+    wrap.innerHTML = list.map(v => {
+      const stats = CineStore.getRatingStats(v.id);
+      const userRated = stats.count > 0
+        ? `<span title="User rating">👥 ${stats.avg.toFixed(1)} (${stats.count})</span>`
+        : '<span style="color:var(--clr-text-muted);">👥 no ratings</span>';
+      return `
+      <div class="video-item">
+        <div class="video-thumb${v.thumbUrl ? ' has-img' : ''}"
+             style="${v.thumbUrl
+               ? `background-image:url('${v.thumbUrl.replace(/'/g, "\\'")}');`
+               : `background:linear-gradient(145deg,${v.color}cc,#070710);`}">${v.thumbUrl ? '' : initials(v.title)}</div>
+        <div class="video-meta">
+          <h4>${escapeHtml(v.title)}${v.promoted ? '<span class="promoted-pill">★ Promoted</span>' : ''}</h4>
+          <span>${v.category}</span>
+          <span>${v.genre}</span>
+          <span>${v.year}</span>
+          ${userRated}
+          <span style="color:#c44dff;">${({idb:'file',youtube:'YouTube',iframe:'embed',url:'URL',file:'file'}[v.sourceType]||v.sourceType)}</span>
+        </div>
+        <div style="display:flex;align-items:center;">
+          <button class="btn-promote ${v.promoted ? 'on' : ''}" data-id="${v.id}"
+            title="${v.promoted ? 'Unpromote' : 'Promote this video to the top of the site'}">
+            ${v.promoted ? '★ Promoted' : '☆ Promote'}
+          </button>
+          <button class="btn-edit" data-id="${v.id}" title="Edit this video's details">Edit</button>
+          <button class="btn-del" data-id="${v.id}">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    wrap.querySelectorAll('.btn-edit').forEach(btn => {
+      btn.addEventListener('click', () => startEdit(btn.dataset.id));
+    });
+
+    wrap.querySelectorAll('.btn-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const v = CineStore.getById(btn.dataset.id);
+        const ok = await cineConfirm({
+          title: 'Delete this video?',
+          body: 'This will permanently remove <b>' +
+                (v ? escapeHtml(v.title) : 'the video') +
+                '</b> from the site. This action cannot be undone.',
+          variant: 'danger',
+          okLabel: 'Delete',
+          cancelLabel: 'Keep'
+        });
+        if (ok) {
+          await CineStore.remove(btn.dataset.id);
+          renderList();
+        }
+      });
+    });
+
+    wrap.querySelectorAll('.btn-promote').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const cur = CineStore.isPromoted(id);
+        CineStore.setPromoted(id, !cur);
+        renderList();
+      });
+    });
+
+    renderUsers();
+    renderDashboard();
+    updateSideNavStats();
+  }
+
+  // ---- Engagement Dashboard ----
+  function renderDashboard() {
+    const videos = CineStore.getAll();
+    const ratings = CineStore.getAllRatings();
+    const comments = CineStore.getAllComments();
+
+    // KPIs
+    let totalRatings = 0, ratingSum = 0;
+    Object.keys(ratings).forEach(vid => {
+      Object.values(ratings[vid]).forEach(r => {
+        totalRatings++; ratingSum += (r.stars || 0);
+      });
+    });
+    const avgRating = totalRatings ? (ratingSum / totalRatings).toFixed(2) : '—';
+    const promotedCount = videos.filter(v => v.promoted).length;
+    const commentedVideos = new Set(comments.map(c => c.videoId)).size;
+
+    document.getElementById('dash-kpis').innerHTML = `
+      <div class="dash-kpi">
+        <div class="k-label">Videos</div>
+        <div class="k-val">${videos.length}</div>
+        <div class="k-sub">${promotedCount} promoted</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="k-label">Ratings</div>
+        <div class="k-val">${totalRatings}</div>
+        <div class="k-sub">avg ${avgRating} ★</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="k-label">Comments</div>
+        <div class="k-val">${comments.length}</div>
+        <div class="k-sub">on ${commentedVideos} video${commentedVideos === 1 ? '' : 's'}</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="k-label">Users</div>
+        <div class="k-val">${CineStore.userCount()}</div>
+        <div class="k-sub">registered</div>
+      </div>`;
+
+    // Top rated
+    const withRatings = videos.map(v => {
+      const s = CineStore.getRatingStats(v.id);
+      return { v, avg: s.avg, count: s.count };
+    }).filter(x => x.count > 0)
+      .sort((a, b) => b.avg - a.avg || b.count - a.count)
+      .slice(0, 5);
+
+    const topRatedEl = document.getElementById('dash-top-rated');
+    topRatedEl.innerHTML = withRatings.length
+      ? withRatings.map(x => `
+          <div class="dl-row">
+            <span class="dl-title">${escapeHtml(x.v.title)}</span>
+            <span class="dl-meta">★ ${x.avg.toFixed(1)} · ${x.count} vote${x.count === 1 ? '' : 's'}</span>
+          </div>`).join('')
+      : '<div class="dl-empty">No user ratings yet.</div>';
+
+    // Most commented
+    const commentCounts = {};
+    comments.forEach(c => { commentCounts[c.videoId] = (commentCounts[c.videoId] || 0) + 1; });
+    const topCommented = Object.keys(commentCounts)
+      .map(vid => ({ v: CineStore.getById(vid), n: commentCounts[vid] }))
+      .filter(x => x.v)
+      .sort((a, b) => b.n - a.n)
+      .slice(0, 5);
+
+    const topCommentedEl = document.getElementById('dash-top-commented');
+    topCommentedEl.innerHTML = topCommented.length
+      ? topCommented.map(x => `
+          <div class="dl-row">
+            <span class="dl-title">${escapeHtml(x.v.title)}</span>
+            <span class="dl-meta">${x.n} comment${x.n === 1 ? '' : 's'}</span>
+          </div>`).join('')
+      : '<div class="dl-empty">No comments yet.</div>';
+
+    // Recent comments
+    const recentEl = document.getElementById('dash-recent-comments');
+    const recent = comments.slice(0, 8);
+    recentEl.innerHTML = recent.length
+      ? recent.map(c => {
+          const vid = CineStore.getById(c.videoId);
+          const when = new Date(c.createdAt).toLocaleString();
+          return `
+            <div class="dash-comment">
+              <div class="dc-head">
+                <span><span class="dc-user">${escapeHtml(c.userName)}</span>
+                  <span style="margin:0 6px;">on</span>
+                  <i>${escapeHtml(vid ? vid.title : '(deleted video)')}</i>
+                  <span style="margin-left:8px;">${when}</span></span>
+                <button class="dc-del" data-vid="${c.videoId}" data-cid="${c.id}">Delete</button>
+              </div>
+              <div class="dc-text">${escapeHtml(c.text)}</div>
+            </div>`;
+        }).join('')
+      : '<div class="dl-empty">No comments yet.</div>';
+
+    recentEl.querySelectorAll('.dc-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const ok = await cineConfirm({
+          title: 'Delete this comment?',
+          body: 'The comment will be permanently removed.',
+          variant: 'danger', okLabel: 'Delete', cancelLabel: 'Keep',
+        });
+        if (ok) {
+          CineStore.deleteComment(btn.dataset.vid, btn.dataset.cid);
+          renderDashboard();
+        }
+      });
+    });
+  }
+
+  function renderUsers() {
+    const users = CineStore.getAllUsers();
+    document.getElementById('users-count').textContent = users.length;
+    const wrap = document.getElementById('users-list');
+
+    if (!users.length) {
+      wrap.innerHTML = '<div class="users-empty">' +
+        '<div style="font-size:1.8rem;margin-bottom:8px;opacity:0.6;">👥</div>' +
+        'No users have registered yet.<br>' +
+        '<span style="font-size:0.85rem;">Users who sign up will appear here.</span></div>';
+      return;
+    }
+
+    wrap.innerHTML = users
+      .slice()
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+      .map(u => {
+        const inits = (u.name || '?').trim().split(/\s+/)
+          .map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+        const when = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—';
+        return `
+          <div class="user-row">
+            <div class="u-avatar">${escapeHtml(inits)}</div>
+            <div class="u-info">
+              <div class="u-name">${escapeHtml(u.name || 'Unnamed')}</div>
+              <div class="u-meta">${escapeHtml(u.email)} · member since ${escapeHtml(when)}</div>
+            </div>
+            <span class="u-plan">${escapeHtml(u.plan || 'basic')}</span>
+            <button class="u-del" data-uid="${escapeHtml(u.id)}">Delete</button>
+          </div>`;
+      }).join('');
+
+    wrap.querySelectorAll('.u-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.uid;
+        const u = users.find(x => x.id === id);
+        const ok = await cineConfirm({
+          title: 'Delete this account?',
+          body: 'This will permanently remove <b>' +
+                (u ? escapeHtml(u.name || u.email) : 'this user') +
+                '</b> from the site. They will lose access immediately.',
+          variant: 'danger',
+          okLabel: 'Delete user',
+          cancelLabel: 'Keep'
+        });
+        if (ok) {
+          CineStore.removeUser(id);
+          renderUsers();
+          updateSideNavStats();
+        }
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+</script>
+</body>
+</html>

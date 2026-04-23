@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pricing – CineVerse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .page-hero {
+      padding: 140px 0 60px;
+      background: linear-gradient(180deg, rgba(245,197,24,0.1) 0%, transparent 100%);
+      border-bottom: 1px solid var(--clr-border-2);
+    }
+  </style>
+</head>
+<body>
+  <nav id="navbar" class="navbar scrolled">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-logo"><span class="logo-c">C</span>ineVerse</a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="../index.html" class="nav-link">Home</a></li>
+        <li><a href="movies.html" class="nav-link">Movies</a></li>
+        <li><a href="series.html" class="nav-link">Series</a></li>
+        <li><a href="originals.html" class="nav-link">Originals</a></li>
+        <li><a href="genres.html" class="nav-link">Genres</a></li>
+        <li><a href="pricing.html" class="nav-link active">Pricing</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="btn-nav btn-sign-in">Sign In</a>
+        <a href="register.html" class="btn-nav btn-start">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="container">
+      <div class="section-tag">💎 Plans</div>
+      <h1 class="section-title" style="margin-top:12px;">Choose Your <span class="gradient-text">Plan</span></h1>
+      <p class="section-sub">Flexible pricing. Cancel anytime. 30-day free trial on every plan.</p>
+    </div>
+  </div>
+
+  <section class="section pricing-section">
+    <div class="container">
+      <div class="pricing-grid">
+        <div class="price-card">
+          <div class="price-header">
+            <h3>Basic</h3>
+            <div class="price-amount">
+              <span class="currency">$</span>
+              <span class="amount">7</span>
+              <span class="period">/mo</span>
+            </div>
+          </div>
+          <ul class="price-features">
+            <li>✓ HD Streaming</li>
+            <li>✓ 1 Screen at a time</li>
+            <li>✓ Full Library Access</li>
+            <li>✓ Mobile & Tablet</li>
+            <li class="disabled">✗ 4K Ultra HD</li>
+            <li class="disabled">✗ Offline Downloads</li>
+          </ul>
+          <a href="register.html?plan=basic" class="btn-outline plan-btn">Choose Basic</a>
+        </div>
+
+        <div class="price-card price-popular">
+          <div class="popular-badge">Most Popular</div>
+          <div class="price-header">
+            <h3>Premium</h3>
+            <div class="price-amount">
+              <span class="currency">$</span>
+              <span class="amount">14</span>
+              <span class="period">/mo</span>
+            </div>
+          </div>
+          <ul class="price-features">
+            <li>✓ 4K Ultra HD</li>
+            <li>✓ 4 Screens at once</li>
+            <li>✓ Full Library Access</li>
+            <li>✓ All Devices</li>
+            <li>✓ Offline Downloads</li>
+            <li>✓ Originals Access</li>
+          </ul>
+          <a href="register.html?plan=premium" class="btn-primary plan-btn">Start Premium</a>
+        </div>
+
+        <div class="price-card">
+          <div class="price-header">
+            <h3>Family</h3>
+            <div class="price-amount">
+              <span class="currency">$</span>
+              <span class="amount">21</span>
+              <span class="period">/mo</span>
+            </div>
+          </div>
+          <ul class="price-features">
+            <li>✓ Everything in Premium</li>
+            <li>✓ 6 Screens at once</li>
+            <li>✓ 6 User Profiles</li>
+            <li>✓ Kids Mode</li>
+            <li>✓ Parental Controls</li>
+            <li>✓ Priority Support</li>
+          </ul>
+          <a href="register.html?plan=family" class="btn-outline plan-btn">Choose Family</a>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:60px;color:var(--clr-text-muted);font-size:0.9rem;">
+        <p>All plans include: unlimited streaming · ad-free experience · cancel anytime · 30-day free trial</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer" style="margin-top:0;">
+    <div class="container">
+      <div class="footer-bottom" style="border:none;padding:24px 0;">
+        <p>© 2026 CineVerse Inc.</p>
+        <a href="../index.html" class="btn-outline" style="padding:8px 20px;font-size:0.85rem;">← Back to Home</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>

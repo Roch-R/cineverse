@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CineVerse – Stream thousands of movies, series, and exclusive originals in stunning 4K. Your ultimate cinematic experience." />
+  <title>CineVerse – Stream Movies & Series</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ===== LOADING SCREEN ===== -->
+  <div id="loader" class="loader">
+    <div class="loader-logo">
+      <span class="loader-c">C</span>
+      <span class="loader-text">ineVerse</span>
+    </div>
+    <div class="loader-bar"><div class="loader-progress"></div></div>
+  </div>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav id="navbar" class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo" id="nav-logo-link">
+        <span class="logo-c">C</span>ineVerse
+      </a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#home" class="nav-link active">Home</a></li>
+        <li><a href="pages/movies.html" class="nav-link">Movies</a></li>
+        <li><a href="pages/series.html" class="nav-link">Series</a></li>
+        <li><a href="pages/originals.html" class="nav-link">Originals</a></li>
+        <li><a href="pages/genres.html" class="nav-link">Genres</a></li>
+        <li><a href="pages/pricing.html" class="nav-link">Pricing</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="btn-search" id="search-toggle" aria-label="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+        <a href="pages/login.html" class="btn-nav btn-sign-in" id="sign-in-btn">Sign In</a>
+        <a href="pages/register.html" class="btn-nav btn-start" id="start-btn">Get Started</a>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="search-overlay">
+      <input type="text" id="search-input" class="search-input" placeholder="Search your uploaded titles…" autocomplete="off" />
+      <button class="search-close" id="search-close" aria-label="Close">✕</button>
+      <div id="search-results" class="search-results"></div>
+    </div>
+  </nav>
+
+  <!-- ===== PROMOTED SPOTLIGHT (auto-hides when nothing promoted) ===== -->
+  <div id="promoted-spotlight"></div>
+
+  <!-- ===== HERO SECTION ===== -->
+  <section id="home" class="hero">
+    <div class="hero-bg">
+      <img src="assets/hero_banner.png" alt="CineVerse Hero" class="hero-img" />
+      <div class="hero-overlay"></div>
+      <div class="hero-particles" id="particles"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span> Now Streaming
+      </div>
+      <h1 class="hero-title">
+        <span class="title-line">Unlimited</span>
+        <span class="title-line gradient-text">Cinematic</span>
+        <span class="title-line">Experience</span>
+      </h1>
+      <p class="hero-desc" id="hero-desc">
+        Your personal streaming library — movies, series, and originals, all in one place. Upload from the admin panel and watch anywhere.
+      </p>
+      <div class="hero-cta">
+        <a href="pages/register.html" class="btn-primary" id="hero-cta-btn">
+          <span>Start Watching Free</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+        <button class="btn-trailer" id="trailer-btn">
+          <div class="play-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          Watch Trailer
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-num" id="stat-movies" data-source="Movies">0</span>
+          <span class="stat-label">Movies</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" id="stat-series" data-source="Series">0</span>
+          <span class="stat-label">Series</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" id="stat-originals" data-source="Originals">0</span>
+          <span class="stat-label">Originals</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll-indicator">
+      <div class="scroll-dot"></div>
+      <span>Scroll to Explore</span>
+    </div>
+  </section>
+
+  <!-- ===== ORIGINALS BANNER ===== -->
+  <section id="originals" class="originals-section section">
+    <div class="originals-bg"></div>
+    <div class="container originals-content">
+      <div class="originals-text">
+        <div class="section-tag">⭐ Exclusive</div>
+        <h2 class="section-title">CineVerse <span class="gradient-text">Originals</span></h2>
+        <p class="section-sub">Stories told only here. Award-winning originals streaming exclusively on CineVerse.</p>
+        <a href="pages/originals.html" class="btn-primary" id="explore-originals-btn">
+          <span>Explore Originals</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      </div>
+      <div class="originals-cards" id="originals-cards"></div>
+    </div>
+  </section>
+
+  <!-- ===== GENRES ===== -->
+  <section id="genres" class="section genres-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">🎭 Browse</div>
+        <h2 class="section-title">Explore by <span class="gradient-text">Genre</span></h2>
+      </div>
+      <div class="genres-grid" id="genres-grid">
+        <a href="pages/genres.html?genre=Action" class="genre-card genre-action" data-genre="Action">
+          <div class="genre-icon">💥</div>
+          <h3>Action</h3>
+          <span class="genre-count">0 titles</span>
+        </a>
+        <a href="pages/genres.html?genre=Drama" class="genre-card genre-drama" data-genre="Drama">
+          <div class="genre-icon">🎭</div>
+          <h3>Drama</h3>
+          <span class="genre-count">0 titles</span>
+        </a>
+        <a href="pages/genres.html?genre=Sci-Fi" class="genre-card genre-scifi" data-genre="Sci-Fi">
+          <div class="genre-icon">🚀</div>
+          <h3>Sci-Fi</h3>
+          <span class="genre-count">0 titles</span>
+        </a>
+        <a href="pages/genres.html?genre=Horror" class="genre-card genre-horror" data-genre="Horror">
+          <div class="genre-icon">👻</div>
+          <h3>Horror</h3>
+          <span class="genre-count">0 titles</span>
+        </a>
+        <a href="pages/genres.html?genre=Romance" class="genre-card genre-romance" data-genre="Romance">
+          <div class="genre-icon">💕</div>
+          <h3>Romance</h3>
+          <span class="genre-count">0 titles</span>
+        </a>
+        <a href="pages/genres.html?genre=Comedy" class="genre-card genre-comedy" data-genre="Comedy">
+          <div class="genre-icon">😂</div>
+          <h3>Comedy</h3>
+          <span class="genre-count">0 titles</span>
+        </a>
+        <a href="pages/genres.html?genre=Thriller" class="genre-card genre-thriller" data-genre="Thriller">
+          <div class="genre-icon">🔪</div>
+          <h3>Thriller</h3>
+          <span class="genre-count">0 titles</span>
+        </a>
+        <a href="pages/genres.html?genre=Animation" class="genre-card genre-animation" data-genre="Animation">
+          <div class="genre-icon">✨</div>
+          <h3>Animation</h3>
+          <span class="genre-count">0 titles</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section class="section how-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">🔰 How It Works</div>
+        <h2 class="section-title">Start in <span class="gradient-text">3 Steps</span></h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card" data-step="1">
+          <div class="step-num">01</div>
+          <div class="step-icon">📝</div>
+          <h3>Create Account</h3>
+          <p>Register a free account — no credit card needed.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-card" data-step="2">
+          <div class="step-num">02</div>
+          <div class="step-icon">⬆️</div>
+          <h3>Upload Your Titles</h3>
+          <p>Add movies, series and originals from the admin panel. Files, YouTube, Drive or direct links.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-card" data-step="3">
+          <div class="step-num">03</div>
+          <div class="step-icon">▶️</div>
+          <h3>Watch Anywhere</h3>
+          <p>Stream your library from any browser — desktop, tablet, or phone.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRICING ===== -->
+  <section id="pricing" class="section pricing-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">💎 Plans</div>
+        <h2 class="section-title">Choose Your <span class="gradient-text">Plan</span></h2>
+        <p class="section-sub">Flexible pricing. Cancel anytime.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="price-card" id="plan-basic">
+          <div class="price-header">
+            <h3>Basic</h3>
+            <div class="price-amount">
+              <span class="currency">$</span>
+              <span class="amount">7</span>
+              <span class="period">/mo</span>
+            </div>
+          </div>
+          <ul class="price-features">
+            <li>✓ HD Streaming</li>
+            <li>✓ 1 Screen at a time</li>
+            <li>✓ Full Library Access</li>
+            <li>✓ Mobile & Tablet</li>
+            <li class="disabled">✗ 4K Ultra HD</li>
+            <li class="disabled">✗ Offline Downloads</li>
+          </ul>
+          <a href="pages/register.html?plan=basic" class="btn-outline plan-btn" id="choose-basic">Choose Basic</a>
+        </div>
+
+        <div class="price-card price-popular" id="plan-premium">
+          <div class="popular-badge">Most Popular</div>
+          <div class="price-header">
+            <h3>Premium</h3>
+            <div class="price-amount">
+              <span class="currency">$</span>
+              <span class="amount">14</span>
+              <span class="period">/mo</span>
+            </div>
+          </div>
+          <ul class="price-features">
+            <li>✓ 4K Ultra HD</li>
+            <li>✓ 4 Screens at once</li>
+            <li>✓ Full Library Access</li>
+            <li>✓ All Devices</li>
+            <li>✓ Offline Downloads</li>
+            <li>✓ Originals Access</li>
+          </ul>
+          <a href="pages/register.html?plan=premium" class="btn-primary plan-btn" id="choose-premium">Start Premium</a>
+        </div>
+
+        <div class="price-card" id="plan-family">
+          <div class="price-header">
+            <h3>Family</h3>
+            <div class="price-amount">
+              <span class="currency">$</span>
+              <span class="amount">21</span>
+              <span class="period">/mo</span>
+            </div>
+          </div>
+          <ul class="price-features">
+            <li>✓ Everything in Premium</li>
+            <li>✓ 6 Screens at once</li>
+            <li>✓ 6 User Profiles</li>
+            <li>✓ Kids Mode</li>
+            <li>✓ Parental Controls</li>
+            <li>✓ Priority Support</li>
+          </ul>
+          <a href="pages/register.html?plan=family" class="btn-outline plan-btn" id="choose-family">Choose Family</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== LATEST UPLOADS ===== -->
+  <section class="section latest-section" id="latest-section" style="display:none;">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">🆕 Latest</div>
+        <h2 class="section-title">Recently <span class="gradient-text">Added</span></h2>
+        <p class="section-sub">Freshly uploaded to your library.</p>
+      </div>
+      <div class="all-grid" id="latest-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;"></div>
+    </div>
+  </section>
+
+  <!-- ===== CTA BANNER ===== -->
+  <section class="cta-section">
+    <div class="cta-bg"></div>
+    <div class="container cta-content">
+      <h2 class="cta-title">Ready to watch?</h2>
+      <p>Create your free account to start streaming.</p>
+      <form class="cta-form" id="cta-form" novalidate>
+        <input type="email" id="cta-email" class="cta-input" placeholder="Enter your email address" required />
+        <button type="submit" class="btn-primary" id="cta-get-started">Get Started →</button>
+      </form>
+      <p class="cta-disclaimer" id="cta-msg" style="min-height:18px;"></p>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#" class="nav-logo footer-logo"><span class="logo-c">C</span>ineVerse</a>
+          <p>Your world — in motion. Stream unlimited entertainment in stunning 4K HDR.</p>
+        </div>
+        <div class="footer-links-grid">
+          <div class="footer-col">
+            <h4>Streaming</h4>
+            <ul>
+              <li><a href="pages/movies.html">Movies</a></li>
+              <li><a href="pages/series.html">Series</a></li>
+              <li><a href="pages/originals.html">Originals</a></li>
+              <li><a href="pages/genres.html">Genres</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Account</h4>
+            <ul>
+              <li><a href="pages/login.html">Sign In</a></li>
+              <li><a href="pages/register.html">Register</a></li>
+              <li><a href="pages/dashboard.html">My Dashboard</a></li>
+              <li><a href="pages/pricing.html">Plans</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Library</h4>
+            <ul>
+              <li><a href="#home">Home</a></li>
+              <li><a href="#genres">Browse Genres</a></li>
+              <li><a href="#pricing">Pricing</a></li>
+              <li><a href="pages/dashboard.html">Go to Dashboard</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 CineVerse Inc. All rights reserved.</p>
+        <p id="footer-count" style="color:var(--clr-text-muted);font-size:0.85rem;">0 titles in your library</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== VIDEO MODAL ===== -->
+  <div class="modal-overlay" id="modal-trailer">
+    <div class="modal-box">
+      <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+      <div class="modal-video-wrap" id="trailer-wrap">
+        <div class="mock-player" id="trailer-empty">
+          <div class="mock-play">▶</div>
+          <p>No videos uploaded yet.<br/><a href="pages/admin.html" style="color:var(--clr-primary-2);">Open admin panel</a> to add one.</p>
+        </div>
+      </div>
+      <div id="trailer-meta" style="padding:16px 20px;display:none;">
+        <strong id="trailer-title" style="color:var(--clr-text);font-size:1.1rem;"></strong>
+        <div id="trailer-sub" style="color:var(--clr-text-muted);font-size:0.88rem;margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/store.js"></script>
+  <script src="js/promoted-spotlight.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/mini-player.js"></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Create your CineVerse account and start streaming your personal library." />
+  <title>Create Account – CineVerse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/auth.css" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-bg-glow"></div>
+    <div class="auth-bg-glow-2"></div>
+    <div class="auth-card">
+      <a href="../index.html" class="auth-logo nav-logo">
+        <span class="logo-c">C</span>ineVerse
+      </a>
+      <h1 class="auth-title">Start Watching</h1>
+      <p class="auth-subtitle">Create a free account to access your library.</p>
+
+      <form class="auth-form" id="register-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="reg-name">Full Name</label>
+          <input type="text" id="reg-name" class="form-input" placeholder="Your name" autocomplete="name" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-email">Email Address</label>
+          <input type="email" id="reg-email" class="form-input" placeholder="you@example.com" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-password">Password</label>
+          <input type="password" id="reg-password" class="form-input" placeholder="At least 6 characters" autocomplete="new-password" required minlength="6" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-plan">Select Plan</label>
+          <select id="reg-plan" class="form-input">
+            <option value="basic">Basic – $7/mo</option>
+            <option value="premium" selected>Premium – $14/mo (Most Popular)</option>
+            <option value="family">Family – $21/mo</option>
+          </select>
+        </div>
+        <div class="auth-msg" id="auth-msg"></div>
+        <button type="submit" class="btn-primary auth-submit" id="register-submit">Create Free Account</button>
+      </form>
+
+      <div class="auth-divider" style="margin-top:20px">or</div>
+      <p class="auth-switch">
+        Already have an account? <a href="login.html">Sign in</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="../js/store.js"></script>
+  <script>
+    if (CineStore.currentUser()) {
+      window.location.replace('dashboard.html');
+    }
+
+    const params = new URLSearchParams(location.search);
+    const eParam = params.get('email');
+    const pParam = params.get('plan');
+    if (eParam) document.getElementById('reg-email').value = eParam;
+    if (pParam) {
+      const sel = document.getElementById('reg-plan');
+      const opt = Array.from(sel.options).find(o => o.value === pParam);
+      if (opt) sel.value = pParam;
+    }
+
+    const form  = document.getElementById('register-form');
+    const msg   = document.getElementById('auth-msg');
+    const btn   = document.getElementById('register-submit');
+
+    function setMsg(text, type) {
+      msg.textContent = text || '';
+      msg.className = 'auth-msg' + (type ? ' ' + type : '');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setMsg('');
+      const name  = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const pw    = document.getElementById('reg-password').value;
+      const plan  = document.getElementById('reg-plan').value;
+
+      btn.disabled = true;
+      btn.textContent = 'Creating account…';
+      const res = await CineStore.registerUser({ name, email, password: pw, plan });
+      if (!res.ok) {
+        setMsg(res.error, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Create Free Account';
+        return;
+      }
+      setMsg('Account created — welcome, ' + res.user.name + '!', 'ok');
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
+    });
+  </script>
+</body>
+</html>
